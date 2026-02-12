@@ -59,8 +59,8 @@ export class RuntimePolicyService {
       ibkrScanCode: DEFAULT_IBKR_SCANNER_CODE,
       analysisDataProvider: "ALPACA",
       autoProposeActionable: false,
-      minCompositeScore: 70,
-      minDirectionalProbability: 0.57,
+      minCompositeScore: 63,
+      minDirectionalProbability: 0.54,
       dteMin: settings.dteMin,
       dteMax: settings.dteMax,
       maxPremiumRiskPct: settings.maxPremiumRiskPct,
@@ -194,13 +194,14 @@ export class RuntimePolicyService {
       },
       minCompositeScore: {
         label: "Min Composite Score",
-        description: "Minimum deterministic score before a trade can be considered.",
+        description:
+          "Minimum deterministic score before a trade can be considered. Lower values are more aggressive.",
         min: -300,
         max: 300
       },
       minDirectionalProbability: {
         label: "Min Direction Probability",
-        description: "Minimum up/down probability required for CALL/PUT.",
+        description: "Minimum up/down probability required for CALL/PUT. Lower values are more aggressive.",
         min: 0.5,
         max: 0.99
       },

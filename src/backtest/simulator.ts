@@ -55,8 +55,8 @@ export class WalkForwardSimulator {
 
   private defaultSettings(): WalkForwardSettings {
     return {
-      minCompositeScore: 70,
-      minDirectionalProbability: 0.57,
+      minCompositeScore: 63,
+      minDirectionalProbability: 0.54,
       optionLeverage: 4,
       maxGainPct: 0.6,
       maxLossPct: 0.35,

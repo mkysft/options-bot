@@ -570,10 +570,10 @@ const buildRecommendationEvidence = (
   const hasRelativeStrengthBenchmark = Boolean(benchmarkMeta.benchmarkSymbol);
   const minCompositeScore = Number.isFinite(Number(context?.minCompositeScore))
     ? Number(context?.minCompositeScore)
-    : 70;
+    : 63;
   const minDirectionalProbability = Number.isFinite(Number(context?.minDirectionalProbability))
     ? Number(context?.minDirectionalProbability)
-    : 0.57;
+    : 0.54;
   const suggestedAction = String(context?.suggestedAction ?? "NO_TRADE").toUpperCase();
   const selectedDirectionalProb =
     suggestedAction === "PUT"
@@ -804,13 +804,14 @@ const buildRecommendationEvidence = (
 
   const available = indicators.filter((indicator) => indicator.available).length;
   const total = indicators.length;
-  const minimumAvailableIndicators = Math.max(4, Math.ceil(total * 0.5));
+  const minimumAvailableIndicators = Math.max(3, Math.ceil(total * 0.35));
   const missing = indicators.filter((indicator) => !indicator.available).map((indicator) => indicator.label);
-  const passed = hasCoreMarketData && hasCoreOptionsData && available >= minimumAvailableIndicators;
+  const hasAnyCoreFeed = hasCoreMarketData || hasCoreOptionsData;
+  const passed = hasAnyCoreFeed && available >= minimumAvailableIndicators;
 
   const notes = [...marketEvidence.notes, ...optionEvidence.notes, ...contextEvidence.notes];
   if (!hasCoreMarketData) {
-    notes.push("Core market data requirement failed: quote/history is synthetic or unavailable.");
+    notes.push("Core market data is synthetic or unavailable for this run.");
   } else if (
     marketEvidence.sources.quote === "alpaca_quote" ||
     marketEvidence.sources.closes === "alpaca_historical"
@@ -818,7 +819,10 @@ const buildRecommendationEvidence = (
     notes.push("Core market data is using Alpaca fallback sources.");
   }
   if (!hasCoreOptionsData) {
-    notes.push("Core options data requirement failed: option chain is synthetic or unavailable.");
+    notes.push("Core options data is synthetic or unavailable for this run.");
+  }
+  if (!hasAnyCoreFeed) {
+    notes.push("Both core market and core options feeds are unavailable; confidence is materially reduced.");
   }
   if (!hasRelativeStrengthBenchmark) {
     notes.push("Relative-strength benchmark is unavailable for this symbol snapshot.");
@@ -899,8 +903,8 @@ const buildRecommendationEvidence = (
       passed,
       severity: "hard",
       details: passed
-        ? "Core data and indicator minimums satisfied."
-        : "Blocked by data-quality requirements."
+        ? "At least one core feed and indicator minimums satisfied."
+        : "Blocked: no core feed available or indicator minimum not met."
     },
     {
       id: "options_quality_floor",
@@ -973,7 +977,7 @@ const buildRecommendationEvidence = (
         newsFlow: contextEvidence.sources.newsSentiment,
         calibration: "decision_engine_calibrated_confidence_v2"
       },
-      gateModelVersion: "recommendation_gate_v3"
+      gateModelVersion: "recommendation_gate_v4"
     },
     optionChain: {
       source: optionEvidence.source,
@@ -1848,7 +1852,7 @@ export const registerRoutes = async (app: FastifyInstance): Promise<void> => {
             suggestedAction = "NO_TRADE";
             actionable = false;
             vetoFlags.push("insufficient_real_data");
-            rationale = `${decision.rationale} Data-quality gate blocked trade: ${evidence.indicatorCoverage.available}/${evidence.indicatorCoverage.total} indicators available (minimum ${evidence.dataQuality.minimumAvailableIndicators}) and core non-synthetic market/options data is required.`;
+            rationale = `${decision.rationale} Data-quality gate blocked trade: ${evidence.indicatorCoverage.available}/${evidence.indicatorCoverage.total} indicators available (minimum ${evidence.dataQuality.minimumAvailableIndicators}) and at least one core non-synthetic market/options feed is required.`;
           }
           const normalizedVetoFlags = [...new Set(vetoFlags)];
 

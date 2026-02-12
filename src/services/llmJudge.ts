@@ -283,16 +283,16 @@ export class LlmJudge {
     context: LlmReviewContext
   ): LlmJudgement {
     const vetoFlags: string[] = [];
-    if (feature.eventRisk >= 0.75) vetoFlags.push("high_event_risk");
-    if (feature.spreadPct >= 0.012) vetoFlags.push("wide_underlying_spread");
-    if (feature.gapRisk >= 0.8) vetoFlags.push("elevated_gap_risk");
-    if (feature.adx14 < 12) vetoFlags.push("weak_trend_strength");
-    if (feature.relativeVolume20d < 0.55) vetoFlags.push("low_relative_volume");
-    if (feature.newsSentimentDispersion > 0.8) vetoFlags.push("high_sentiment_dispersion");
+    if (feature.eventRisk >= 0.82) vetoFlags.push("high_event_risk");
+    if (feature.spreadPct >= 0.02) vetoFlags.push("wide_underlying_spread");
+    if (feature.gapRisk >= 0.88) vetoFlags.push("elevated_gap_risk");
+    if (feature.adx14 < 10) vetoFlags.push("weak_trend_strength");
+    if (feature.relativeVolume20d < 0.45) vetoFlags.push("low_relative_volume");
+    if (feature.newsSentimentDispersion > 0.9) vetoFlags.push("high_sentiment_dispersion");
     if (
       typeof context.weakCompositeFloor === "number" &&
       Number.isFinite(context.weakCompositeFloor) &&
-      score.compositeScore < context.weakCompositeFloor
+      score.compositeScore < context.weakCompositeFloor - 6
     ) {
       vetoFlags.push("weak_composite");
     }

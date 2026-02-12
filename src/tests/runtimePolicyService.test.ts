@@ -50,11 +50,11 @@ describe("RuntimePolicyService persistence", () => {
 
     service.updatePolicy({ minCompositeScore: 88, scanTopN: 19 });
     const reset = service.resetPolicy();
-    expect(reset.minCompositeScore).toBe(70);
+    expect(reset.minCompositeScore).toBe(63);
     expect(reset.scanTopN).toBe(10);
 
     const reloaded = new RuntimePolicyService(store).getPolicy();
-    expect(reloaded.minCompositeScore).toBe(70);
+    expect(reloaded.minCompositeScore).toBe(63);
     expect(reloaded.scanTopN).toBe(10);
   });
 });
