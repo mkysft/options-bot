@@ -4,6 +4,7 @@ import { apiRequestLogStore } from "../storage/apiRequestLogStore";
 import type { DailyBar } from "../types/models";
 import { spawn } from "node:child_process";
 import { existsSync, readdirSync } from "node:fs";
+import type { Dirent } from "node:fs";
 import os from "node:os";
 import { basename, join } from "node:path";
 import { Socket } from "node:net";
@@ -1704,6 +1705,83 @@ export class IbkrAdapter {
     };
   }
 
+  private discoverExecutablesInTree(rootDirectory: string, fileName: string, maxDepth = 2): string[] {
+    if (!existsSync(rootDirectory)) return [];
+    const normalizedFile = fileName.trim().toLowerCase();
+    if (!normalizedFile) return [];
+
+    const discovered: string[] = [];
+    const walk = (directory: string, depth: number): void => {
+      if (depth > maxDepth) return;
+
+      let entries: Dirent[];
+      try {
+        entries = readdirSync(directory, { withFileTypes: true });
+      } catch {
+        return;
+      }
+
+      for (const entry of entries) {
+        const fullPath = join(directory, entry.name);
+        if (entry.isFile() && entry.name.toLowerCase() === normalizedFile) {
+          discovered.push(fullPath);
+          continue;
+        }
+        if (!entry.isDirectory()) continue;
+        if (entry.name.startsWith(".")) continue;
+        if (/uninstall|uninstaller/i.test(entry.name)) continue;
+        walk(fullPath, depth + 1);
+      }
+    };
+
+    walk(rootDirectory, 0);
+    return uniq(discovered);
+  }
+
+  private windowsLaunchCandidates(target: "gateway" | "tws"): { names: string[]; paths: string[] } {
+    const configured =
+      target === "gateway" ? settings.ibkrGatewayAppName : settings.ibkrTwsAppName;
+    const configuredNormalized = configured.replace(/\.exe$/i, "").trim();
+    const executableName = target === "gateway" ? "ibgateway.exe" : "tws.exe";
+    const defaultNames =
+      target === "gateway"
+        ? ["IB Gateway", "IBKR Gateway", "IB Gateway Stable", "IB Gateway Latest"]
+        : ["Trader Workstation", "TWS", "Trader Workstation Stable", "Trader Workstation Latest"];
+
+    const programFiles = process.env.ProgramFiles ?? "C:\\Program Files";
+    const programFilesX86 = process.env["ProgramFiles(x86)"] ?? "C:\\Program Files (x86)";
+    const localAppData = process.env.LOCALAPPDATA ?? join(os.homedir(), "AppData", "Local");
+    const defaultRoots = uniq(
+      [
+        "C:\\Jts",
+        target === "gateway" ? "C:\\Jts\\ibgateway" : "C:\\Jts\\tws",
+        join(programFiles, "IB Gateway"),
+        join(programFilesX86, "IB Gateway"),
+        join(localAppData, "Programs", "IB Gateway"),
+        join(programFiles, "Trader Workstation"),
+        join(programFilesX86, "Trader Workstation"),
+        join(localAppData, "Programs", "Trader Workstation")
+      ].filter((value) => value.trim().length > 0)
+    );
+
+    const directPathHints = uniq(
+      defaultRoots.flatMap((root) => [
+        join(root, executableName),
+        join(root, "bin", executableName),
+        join(root, "jars", executableName)
+      ])
+    );
+    const directHits = directPathHints.filter((candidate) => existsSync(candidate));
+    const discoveredViaScan = defaultRoots.flatMap((root) =>
+      this.discoverExecutablesInTree(root, executableName, root.toLowerCase().includes("\\jts") ? 4 : 2)
+    );
+
+    return {
+      names: uniq([configuredNormalized, ...defaultNames].filter((value) => value.length > 0)),
+      paths: uniq([...directHits, ...discoveredViaScan])
+    };
+  }
+
   private async launchMacByName(
     appName: string
   ): Promise<{ ok: boolean; detail: string }> {
@@ -1724,6 +1802,55 @@ export class IbkrAdapter {
     };
   }
 
+  private async launchWindowsByPath(
+    execPath: string
+  ): Promise<{ ok: boolean; detail: string }> {
+    if (!existsSync(execPath)) {
+      return { ok: false, detail: "not_found" };
+    }
+
+    const escapedPath = execPath.replace(/'/g, "''");
+    const result = await this.runCommand("powershell.exe", [
+      "-NoProfile",
+      "-NonInteractive",
+      "-ExecutionPolicy",
+      "Bypass",
+      "-Command",
+      `Start-Process -FilePath '${escapedPath}'`
+    ]);
+    if (result.ok) return { ok: true, detail: "ok" };
+
+    try {
+      await this.spawnDetached(execPath, []);
+      return { ok: true, detail: "ok_detached" };
+    } catch (error) {
+      const fallbackDetail = (error as Error).message;
+      return {
+        ok: false,
+        detail: result.stderr || fallbackDetail || (result.code === null ? "timeout" : `exit_code:${result.code}`)
+      };
+    }
+  }
+
+  private async launchWindowsByName(
+    appName: string
+  ): Promise<{ ok: boolean; detail: string }> {
+    const escapedName = appName.replace(/'/g, "''");
+    const result = await this.runCommand("powershell.exe", [
+      "-NoProfile",
+      "-NonInteractive",
+      "-ExecutionPolicy",
+      "Bypass",
+      "-Command",
+      `Start-Process -FilePath '${escapedName}'`
+    ]);
+    if (result.ok) return { ok: true, detail: "ok" };
+    return {
+      ok: false,
+      detail: result.stderr || (result.code === null ? "timeout" : `exit_code:${result.code}`)
+    };
+  }
+
   async launch(target: "gateway" | "tws" = settings.ibkrLaunchTarget): Promise<IbkrLaunchResult> {
     const dryRun = settings.ibkrLaunchDryRun || settings.appEnv === "test" || Boolean(process.env.BUN_TEST);
     const platform = process.platform;
@@ -1734,6 +1861,10 @@ export class IbkrAdapter {
       commandPreview = config.execPath
         ? `${config.execPath}`
         : `open -a "${config.appName}"`;
+    } else if (platform === "win32") {
+      commandPreview = config.execPath
+        ? `powershell Start-Process -FilePath "${config.execPath}"`
+        : `Auto-discover ${target === "gateway" ? "ibgateway.exe" : "tws.exe"} and launch via Start-Process`;
     } else if (config.execPath) {
       commandPreview = config.execPath;
     } else {
@@ -1833,6 +1964,75 @@ export class IbkrAdapter {
             attemptedApps: [...paths, ...names]
           };
         }
+      } else if (platform === "win32") {
+        const candidates = this.windowsLaunchCandidates(target);
+        const attempts: string[] = [];
+        const failures: string[] = [];
+
+        if (config.execPath) {
+          const byPath = await this.launchWindowsByPath(config.execPath);
+          attempts.push(`Start-Process "${config.execPath}"`);
+          if (byPath.ok) {
+            return {
+              target,
+              launched: true,
+              dryRun: false,
+              platform,
+              message: `${target.toUpperCase()} launch triggered via path "${config.execPath}". Complete login manually in the IBKR window (2FA may be required).`,
+              commandPreview: `Start-Process "${config.execPath}"`,
+              selectedApp: basename(config.execPath),
+              attemptedApps: [config.execPath, ...candidates.paths, ...candidates.names]
+            };
+          }
+          failures.push(`${config.execPath}: ${byPath.detail}`);
+        }
+
+        for (const execPath of candidates.paths) {
+          if (config.execPath && execPath === config.execPath) continue;
+          const result = await this.launchWindowsByPath(execPath);
+          attempts.push(`Start-Process "${execPath}"`);
+          if (result.ok) {
+            return {
+              target,
+              launched: true,
+              dryRun: false,
+              platform,
+              message: `${target.toUpperCase()} launch triggered via path "${execPath}". Complete login manually in the IBKR window (2FA may be required).`,
+              commandPreview: `Start-Process "${execPath}"`,
+              selectedApp: basename(execPath),
+              attemptedApps: [config.execPath, ...candidates.paths, ...candidates.names].filter(Boolean)
+            };
+          }
+          failures.push(`${execPath}: ${result.detail}`);
+        }
+
+        for (const appName of candidates.names) {
+          const result = await this.launchWindowsByName(appName);
+          attempts.push(`Start-Process "${appName}"`);
+          if (result.ok) {
+            return {
+              target,
+              launched: true,
+              dryRun: false,
+              platform,
+              message: `${target.toUpperCase()} launch triggered via "${appName}". Complete login manually in the IBKR window (2FA may be required).`,
+              commandPreview: `Start-Process "${appName}"`,
+              selectedApp: appName,
+              attemptedApps: [config.execPath, ...candidates.paths, ...candidates.names].filter(Boolean)
+            };
+          }
+          failures.push(`${appName}: ${result.detail}`);
+        }
+
+        return {
+          target,
+          launched: false,
+          dryRun: false,
+          platform,
+          message: `Unable to launch ${target.toUpperCase()} on Windows. Attempts: ${failures.join(" | ")}`,
+          commandPreview: attempts.join(" || "),
+          attemptedApps: [config.execPath, ...candidates.paths, ...candidates.names].filter(Boolean)
+        };
       } else {
         if (!config.execPath) {
           return {

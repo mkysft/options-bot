@@ -100,7 +100,8 @@ bun test
 - For macOS, defaults use app names:
   - `IBKR_GATEWAY_APP_NAME=IB Gateway`
   - `IBKR_TWS_APP_NAME=Trader Workstation`
-- For non-macOS, set executable paths:
+- For Windows, launcher attempts auto-discovery first (`C:\\Jts`, `Program Files`, `LOCALAPPDATA\\Programs`) and falls back to app name launch.
+- For Linux/other non-macOS platforms, set executable paths explicitly:
   - `IBKR_GATEWAY_EXEC_PATH`
   - `IBKR_TWS_EXEC_PATH`
 - If your API port is custom, set `IBKR_PORT` and optionally `IBKR_PORT_CANDIDATES` (comma-separated) so auto-connectivity probing can detect the active session.

@@ -395,7 +395,7 @@ const ENV_FIELDS: EnvFieldDefinition[] = [
   {
     key: "IBKR_GATEWAY_APP_NAME",
     label: "Gateway App Name",
-    description: "macOS app name fallback for Gateway launching.",
+    description: "App name fallback for Gateway launching (macOS/Windows).",
     category: "IBKR",
     type: "text",
     requiresRestart: false
@@ -403,7 +403,7 @@ const ENV_FIELDS: EnvFieldDefinition[] = [
   {
     key: "IBKR_TWS_APP_NAME",
     label: "TWS App Name",
-    description: "macOS app name fallback for TWS launching.",
+    description: "App name fallback for TWS launching (macOS/Windows).",
     category: "IBKR",
     type: "text",
     requiresRestart: false
@@ -411,7 +411,7 @@ const ENV_FIELDS: EnvFieldDefinition[] = [
   {
     key: "IBKR_GATEWAY_EXEC_PATH",
     label: "Gateway Exec Path",
-    description: "Absolute executable path (or .app bundle path) for Gateway.",
+    description: "Absolute executable path (or .app/.exe path) for Gateway.",
     category: "IBKR",
     type: "text",
     requiresRestart: false
@@ -419,7 +419,7 @@ const ENV_FIELDS: EnvFieldDefinition[] = [
   {
     key: "IBKR_TWS_EXEC_PATH",
     label: "TWS Exec Path",
-    description: "Absolute executable path (or .app bundle path) for TWS.",
+    description: "Absolute executable path (or .app/.exe path) for TWS.",
     category: "IBKR",
     type: "text",
     requiresRestart: false
