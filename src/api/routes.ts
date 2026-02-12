@@ -4,7 +4,7 @@ import { settings } from "../core/config";
 import type { DetailedSymbolAnalysis } from "../services/analysisService";
 import type { BotPolicy } from "../services/runtimePolicyService";
 import type { ApiRequestLogEntry } from "../storage/apiRequestLogStore";
-import type { DecisionCard, FeatureVector, ScoreCard } from "../types/models";
+import type { DecisionCard, FeatureVector, OptionContractSnapshot, ScoreCard } from "../types/models";
 import {
   approveOrderRequestSchema,
   apiRequestLogsQuerySchema,
@@ -256,6 +256,14 @@ interface RecommendationRow {
   evidence: ReturnType<typeof buildRecommendationEvidence>;
 }
 
+interface AutoProposalCandidate {
+  rank: number;
+  symbol: string;
+  action: "CALL" | "PUT";
+  decisionCard: DecisionCard;
+  chain: OptionContractSnapshot[];
+}
+
 interface RecommendationsScannerSummary {
   requestedUniverseSize: number;
   evaluatedUniverseSize: number;
@@ -291,6 +299,21 @@ interface RecommendationsExecutionMeta {
     message: string;
     at: string;
   }>;
+  autoProposal: {
+    enabled: boolean;
+    attempted: number;
+    created: number;
+    skipped: number;
+    failed: number;
+    reason: string | null;
+    outcomes: Array<{
+      symbol: string;
+      action: "CALL" | "PUT";
+      status: "created" | "skipped" | "failed";
+      message: string;
+      orderId: string | null;
+    }>;
+  };
 }
 
 interface RecommendationsResponsePayload {
@@ -302,6 +325,7 @@ interface RecommendationsResponsePayload {
     dteMax: number;
     ibkrScanCode: string | null;
     analysisDataProvider: string;
+    autoProposeActionable: boolean;
   };
   scanner: RecommendationsScannerSummary;
   recommendations: RecommendationRow[];
@@ -1379,7 +1403,8 @@ export const registerRoutes = async (app: FastifyInstance): Promise<void> => {
       dteMin: policy.dteMin,
       dteMax: policy.dteMax,
       ibkrScanCode: policy.ibkrScanCode,
-      analysisDataProvider: policy.analysisDataProvider
+      analysisDataProvider: policy.analysisDataProvider,
+      autoProposeActionable: policy.autoProposeActionable
     };
 
     const scannerFromResult = (scanned: ScanWithDiscoveryResult | null): RecommendationsScannerSummary => {
@@ -1419,6 +1444,7 @@ export const registerRoutes = async (app: FastifyInstance): Promise<void> => {
       timeoutReason: string | null;
       fallbackFromGeneratedAt?: string | null;
       executionErrors?: RecommendationsExecutionMeta["errors"];
+      autoProposal?: RecommendationsExecutionMeta["autoProposal"];
     }): RecommendationsResponsePayload => ({
       generatedAt: new Date().toISOString(),
       policySnapshot,
@@ -1432,7 +1458,17 @@ export const registerRoutes = async (app: FastifyInstance): Promise<void> => {
         computeMs: elapsedMs(),
         elapsedMs: elapsedMs(),
         fallbackFromGeneratedAt: params.fallbackFromGeneratedAt ?? null,
-        errors: params.executionErrors ?? []
+        errors: params.executionErrors ?? [],
+        autoProposal:
+          params.autoProposal ?? {
+            enabled: policy.autoProposeActionable,
+            attempted: 0,
+            created: 0,
+            skipped: 0,
+            failed: 0,
+            reason: policy.autoProposeActionable ? "no_actionable_candidates" : "disabled_by_policy",
+            outcomes: []
+          }
       }
     });
 
@@ -1458,6 +1494,12 @@ export const registerRoutes = async (app: FastifyInstance): Promise<void> => {
         executionSource: payload.execution.source,
         elapsedMs: payload.execution.elapsedMs,
         computeMs: payload.execution.computeMs,
+        autoProposeEnabled: payload.execution.autoProposal.enabled,
+        autoProposeAttempted: payload.execution.autoProposal.attempted,
+        autoProposeCreated: payload.execution.autoProposal.created,
+        autoProposeSkipped: payload.execution.autoProposal.skipped,
+        autoProposeFailed: payload.execution.autoProposal.failed,
+        autoProposeReason: payload.execution.autoProposal.reason,
         executionErrors: payload.execution.errors,
         executionErrorCount: payload.execution.errors.length
       });
@@ -1492,7 +1534,16 @@ export const registerRoutes = async (app: FastifyInstance): Promise<void> => {
             ...(Array.isArray(candidate.execution.errors) ? candidate.execution.errors : []),
             ...executionErrors,
             buildRecommendationRunError("internal", reason)
-          ].slice(-20)
+          ].slice(-20),
+          autoProposal: candidate.execution.autoProposal ?? {
+            enabled: policy.autoProposeActionable,
+            attempted: 0,
+            created: 0,
+            skipped: 0,
+            failed: 0,
+            reason: policy.autoProposeActionable ? "cache_fallback_no_autoproposal" : "disabled_by_policy",
+            outcomes: []
+          }
         }
       };
     };
@@ -1502,6 +1553,197 @@ export const registerRoutes = async (app: FastifyInstance): Promise<void> => {
       let timeoutReason: string | null = null;
       let timedOut = false;
       const executionErrors: RecommendationsExecutionMeta["errors"] = [];
+      const autoProposalCandidates: AutoProposalCandidate[] = [];
+      const autoProposalDefaultSummary: RecommendationsExecutionMeta["autoProposal"] = {
+        enabled: policy.autoProposeActionable,
+        attempted: 0,
+        created: 0,
+        skipped: 0,
+        failed: 0,
+        reason: policy.autoProposeActionable ? "no_actionable_candidates" : "disabled_by_policy",
+        outcomes: []
+      };
+
+      const buildDecisionCard = (
+        analysis: DetailedSymbolAnalysis,
+        decision: {
+          action: "CALL" | "PUT" | "NO_TRADE";
+          confidence: number;
+          rationale: string;
+          vetoFlags: string[];
+        }
+      ): DecisionCard => ({
+        symbol: analysis.snapshot.symbol,
+        timestamp: new Date().toISOString(),
+        action: decision.action,
+        confidence: decision.confidence,
+        rationale: decision.rationale,
+        vetoFlags: decision.vetoFlags,
+        scoreCard: analysis.scoreCard
+      });
+
+      const maybeAutoProposeActionable = async (): Promise<
+        RecommendationsExecutionMeta["autoProposal"]
+      > => {
+        if (!policy.autoProposeActionable) return autoProposalDefaultSummary;
+        if (autoProposalCandidates.length === 0) return autoProposalDefaultSummary;
+
+        const outcomes: RecommendationsExecutionMeta["autoProposal"]["outcomes"] = [];
+        let created = 0;
+        let skipped = 0;
+        let failed = 0;
+        let reason: string | null = null;
+
+        const connectivity = await app.services.ibkrAdapter.checkConnectivity(5_000);
+        app.services.executionGateway.notifyConnectivityStatus(connectivity);
+        if (!connectivity.reachable) {
+          reason = "ibkr_disconnected";
+          for (const candidate of autoProposalCandidates) {
+            outcomes.push({
+              symbol: candidate.symbol,
+              action: candidate.action,
+              status: "skipped",
+              message: `IBKR disconnected (${connectivity.message}).`,
+              orderId: null
+            });
+          }
+          skipped = autoProposalCandidates.length;
+          return {
+            enabled: true,
+            attempted: autoProposalCandidates.length,
+            created,
+            skipped,
+            failed,
+            reason,
+            outcomes: outcomes.slice(0, 40)
+          };
+        }
+
+        try {
+          await app.services.executionGateway.refreshBrokerStatuses();
+          await app.services.executionGateway.syncAccountState(app.services.accountState);
+        } catch (error) {
+          reason = "broker_sync_failed";
+          const message = (error as Error).message || "broker_sync_failed";
+          for (const candidate of autoProposalCandidates) {
+            outcomes.push({
+              symbol: candidate.symbol,
+              action: candidate.action,
+              status: "failed",
+              message,
+              orderId: null
+            });
+          }
+          failed = autoProposalCandidates.length;
+          return {
+            enabled: true,
+            attempted: autoProposalCandidates.length,
+            created,
+            skipped,
+            failed,
+            reason,
+            outcomes: outcomes.slice(0, 40)
+          };
+        }
+
+        const brokerSnapshot = app.services.executionGateway.getLastAccountSnapshot();
+        const accountEquity =
+          typeof brokerSnapshot?.netLiquidation === "number" && brokerSnapshot.netLiquidation > 0
+            ? brokerSnapshot.netLiquidation
+            : app.services.accountState.accountEquity;
+        if (!Number.isFinite(accountEquity) || accountEquity <= 0) {
+          reason = "account_equity_unavailable";
+          for (const candidate of autoProposalCandidates) {
+            outcomes.push({
+              symbol: candidate.symbol,
+              action: candidate.action,
+              status: "failed",
+              message: "Unable to determine account equity for auto-proposal.",
+              orderId: null
+            });
+          }
+          failed = autoProposalCandidates.length;
+          return {
+            enabled: true,
+            attempted: autoProposalCandidates.length,
+            created,
+            skipped,
+            failed,
+            reason,
+            outcomes: outcomes.slice(0, 40)
+          };
+        }
+
+        const activeStatuses = new Set([
+          "PENDING_APPROVAL",
+          "SUBMITTED_PAPER",
+          "SUBMITTED_LIVE",
+          "FILLED"
+        ]);
+        const activeSignatures = new Set(
+          app.services.auditStore
+            .listOrders({ limit: 2_000 })
+            .filter(
+              (order) =>
+                order.intentType === "ENTRY" &&
+                activeStatuses.has(order.status) &&
+                (order.action === "CALL" || order.action === "PUT")
+            )
+            .map((order) => `${order.symbol.toUpperCase()}|${order.action}`)
+        );
+
+        for (const candidate of autoProposalCandidates) {
+          const signature = `${candidate.symbol.toUpperCase()}|${candidate.action}`;
+          if (activeSignatures.has(signature)) {
+            skipped += 1;
+            outcomes.push({
+              symbol: candidate.symbol,
+              action: candidate.action,
+              status: "skipped",
+              message: "Existing active entry order for symbol/action.",
+              orderId: null
+            });
+            continue;
+          }
+
+          try {
+            const order = app.services.executionGateway.proposeOrder(
+              candidate.symbol,
+              candidate.decisionCard,
+              candidate.chain,
+              accountEquity
+            );
+            created += 1;
+            activeSignatures.add(signature);
+            outcomes.push({
+              symbol: candidate.symbol,
+              action: candidate.action,
+              status: "created",
+              message: `Ticket created from recommendation rank ${candidate.rank}.`,
+              orderId: order.id
+            });
+          } catch (error) {
+            failed += 1;
+            outcomes.push({
+              symbol: candidate.symbol,
+              action: candidate.action,
+              status: "failed",
+              message: (error as Error).message || "auto_propose_failed",
+              orderId: null
+            });
+          }
+        }
+
+        return {
+          enabled: true,
+          attempted: autoProposalCandidates.length,
+          created,
+          skipped,
+          failed,
+          reason,
+          outcomes: outcomes.slice(0, 40)
+        };
+      };
 
       try {
         const timeoutEnabled = totalTimeoutMs > 0;
@@ -1608,6 +1850,7 @@ export const registerRoutes = async (app: FastifyInstance): Promise<void> => {
             vetoFlags.push("insufficient_real_data");
             rationale = `${decision.rationale} Data-quality gate blocked trade: ${evidence.indicatorCoverage.available}/${evidence.indicatorCoverage.total} indicators available (minimum ${evidence.dataQuality.minimumAvailableIndicators}) and core non-synthetic market/options data is required.`;
           }
+          const normalizedVetoFlags = [...new Set(vetoFlags)];
 
           recommendations.push({
             rank,
@@ -1616,7 +1859,7 @@ export const registerRoutes = async (app: FastifyInstance): Promise<void> => {
             suggestedAction,
             confidence: decision.confidence,
             rationale,
-            vetoFlags: [...new Set(vetoFlags)],
+            vetoFlags: normalizedVetoFlags,
             metrics: {
               compositeScore: analysis.scoreCard.compositeScore,
               directionalUpProb: analysis.featureVector.directionalUpProb,
@@ -1625,6 +1868,21 @@ export const registerRoutes = async (app: FastifyInstance): Promise<void> => {
             },
             evidence
           });
+
+          if (actionable && (suggestedAction === "CALL" || suggestedAction === "PUT")) {
+            autoProposalCandidates.push({
+              rank,
+              symbol: analysis.snapshot.symbol,
+              action: suggestedAction,
+              decisionCard: buildDecisionCard(analysis, {
+                action: suggestedAction,
+                confidence: decision.confidence,
+                rationale,
+                vetoFlags: normalizedVetoFlags
+              }),
+              chain: analysis.chain
+            });
+          }
         };
 
         const appendDeterministicFallbackRows = (startIndex: number, reason: string): void => {
@@ -1752,19 +2010,42 @@ export const registerRoutes = async (app: FastifyInstance): Promise<void> => {
         return emptyFallback;
       }
 
+      const autoProposalSummary = await maybeAutoProposeActionable();
+      if (autoProposalSummary.failed > 0) {
+        executionErrors.push(
+          buildRecommendationRunError(
+            "internal",
+            `Auto-propose failed for ${autoProposalSummary.failed} candidate(s).`
+          )
+        );
+      }
+
       const finalPayload = buildResponse({
         scanner: scannerFromResult(scanned),
         recommendations,
         timedOut,
         source: timedOut ? "fresh_partial" : "fresh",
         timeoutReason,
-        executionErrors
+        executionErrors,
+        autoProposal: autoProposalSummary
       });
 
       if (recommendations.length > 0) {
         recommendationsCache.set(cacheKey, finalPayload);
       }
       latestRecommendationsPayload = finalPayload;
+
+      app.services.auditStore.logEvent("recommendations_auto_propose_summary", {
+        topN,
+        universeSize: universe.length,
+        enabled: autoProposalSummary.enabled,
+        attempted: autoProposalSummary.attempted,
+        created: autoProposalSummary.created,
+        skipped: autoProposalSummary.skipped,
+        failed: autoProposalSummary.failed,
+        reason: autoProposalSummary.reason,
+        outcomes: autoProposalSummary.outcomes.slice(0, 20)
+      });
 
       recordAudit(finalPayload);
       return finalPayload;
@@ -1803,7 +2084,16 @@ export const registerRoutes = async (app: FastifyInstance): Promise<void> => {
             errors: [
               ...(Array.isArray(shared.execution.errors) ? shared.execution.errors : []),
               ...globalErrors
-            ].slice(-20)
+            ].slice(-20),
+            autoProposal: shared.execution.autoProposal ?? {
+              enabled: policy.autoProposeActionable,
+              attempted: 0,
+              created: 0,
+              skipped: 0,
+              failed: 0,
+              reason: policy.autoProposeActionable ? "cache_fallback_no_autoproposal" : "disabled_by_policy",
+              outcomes: []
+            }
           }
         };
         recordAudit(sharedFallback);

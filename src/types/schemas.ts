@@ -76,6 +76,7 @@ export const botPolicyPatchSchema = z
     scanTopN: z.number().int().positive().max(100).optional(),
     ibkrScanCode: z.enum(IBKR_SCANNER_CODES).optional(),
     analysisDataProvider: z.enum(["AUTO", "ALPACA", "IBKR"]).optional(),
+    autoProposeActionable: z.boolean().optional(),
     minCompositeScore: z.number().min(-300).max(300).optional(),
     minDirectionalProbability: z.number().min(0.5).max(0.99).optional(),
     dteMin: z.number().int().min(1).max(90).optional(),

@@ -198,6 +198,10 @@ const ANALYSIS_PROVIDER_OPTIONS = [
   { value: "AUTO", label: "Auto (IBKR then Alpaca)" },
   { value: "IBKR", label: "IBKR Only" }
 ];
+const AUTO_PROPOSE_ACTIONABLE_OPTIONS = [
+  { value: "false", label: "Manual (Propose button)" },
+  { value: "true", label: "Auto-create tickets from actionable rows" }
+];
 const DEFAULT_ANALYSIS_PROVIDER = "ALPACA";
 const SCANNER_PROVIDER_KEY = "SCANNER_PROVIDER_ORDER";
 const SCANNER_PROVIDER_CUSTOM_VALUE = "__custom__";
@@ -1089,6 +1093,9 @@ export const App = () => {
     nextPolicyForm.analysisDataProvider = String(
       policyQuery.data.policy.analysisDataProvider ?? DEFAULT_ANALYSIS_PROVIDER
     );
+    nextPolicyForm.autoProposeActionable = String(
+      Boolean(policyQuery.data.policy.autoProposeActionable)
+    );
     setPolicyForm(nextPolicyForm);
     setUniverseInput((policyQuery.data.policy.universeSymbols ?? []).join(", "));
   }, [policyQuery.data]);
@@ -1610,6 +1617,7 @@ export const App = () => {
   const recommendationRunErrors = Array.isArray(recommendationsExecution?.errors)
     ? recommendationsExecution.errors
     : EMPTY_ARRAY;
+  const recommendationAutoProposal = recommendationsExecution?.autoProposal ?? null;
   const actionableRecommendations = recommendations.filter((entry) => entry.actionable);
   const actionableSymbols = useMemo(
     () =>
@@ -1915,9 +1923,19 @@ export const App = () => {
     if (!ANALYSIS_PROVIDER_OPTIONS.some((option) => option.value === selectedAnalysisProvider)) {
       throw new Error("Select a valid analysis data provider.");
     }
+    const autoProposeActionableRaw = String(
+      policyForm.autoProposeActionable ??
+        String(Boolean(policyQuery.data?.policy?.autoProposeActionable))
+    )
+      .trim()
+      .toLowerCase();
+    if (autoProposeActionableRaw !== "true" && autoProposeActionableRaw !== "false") {
+      throw new Error("Select a valid auto-propose mode.");
+    }
 
     payload.ibkrScanCode = selectedScanCode;
     payload.analysisDataProvider = selectedAnalysisProvider;
+    payload.autoProposeActionable = autoProposeActionableRaw === "true";
     payload.universeSymbols = parsedUniverse;
     return payload;
   };
@@ -2990,7 +3008,7 @@ export const App = () => {
                 <CardTitle>Recommendations</CardTitle>
                 <CardDescription>
                   {thresholdSummary
-                    ? `Create order tickets only for actionable rows. Current gates: score >= ${thresholdSummary.minCompositeScore}, direction >= ${thresholdSummary.minDirectionalProbability}.`
+                    ? `Create order tickets only for actionable rows. Current gates: score >= ${thresholdSummary.minCompositeScore}, direction >= ${thresholdSummary.minDirectionalProbability}. Auto-propose is ${thresholdSummary.autoProposeActionable ? "ON" : "OFF"}.`
                     : "Create order tickets only for actionable rows where deterministic rules and judge pass."}
                 </CardDescription>
               </div>
@@ -3077,6 +3095,16 @@ export const App = () => {
                     | Source: {String(recommendationsExecution?.source ?? "unknown")} | Timed out:{" "}
                     {recommendationsExecution?.timedOut ? "yes" : "no"} | Budget:{" "}
                     {recommendationTimeoutBudgetLabel}
+                  </p>
+                  <p className="mt-1">
+                    Auto-ticketing:{" "}
+                    {recommendationAutoProposal?.enabled ? "enabled" : "disabled"}{" "}
+                    {recommendationAutoProposal?.enabled
+                      ? `| Attempted: ${recommendationAutoProposal.attempted} | Created: ${recommendationAutoProposal.created} | Skipped: ${recommendationAutoProposal.skipped} | Failed: ${recommendationAutoProposal.failed}`
+                      : ""}
+                    {recommendationAutoProposal?.reason
+                      ? ` | Reason: ${recommendationAutoProposal.reason}`
+                      : ""}
                   </p>
                   {recommendationsExecution?.timeoutReason ? (
                     <p className="mt-1 text-amber-700">
@@ -4217,6 +4245,45 @@ export const App = () => {
                       </Select>
                       <span className="text-xs text-muted-foreground">
                         Controls quote/history/options analysis source. Alpaca mode bypasses IBKR analysis requests.
+                      </span>
+                    </label>
+
+                    <label className="block space-y-1">
+                      <span className="text-sm font-medium text-foreground">
+                        Auto-Propose Actionable Recommendations
+                      </span>
+                      <Select
+                        name="policy_auto_propose_actionable"
+                        items={AUTO_PROPOSE_ACTIONABLE_OPTIONS}
+                        value={String(
+                          policyForm.autoProposeActionable ??
+                            String(Boolean(policyQuery.data?.policy?.autoProposeActionable))
+                        )}
+                        onValueChange={(value) => {
+                          if (value !== "true" && value !== "false") return;
+                          setPolicyForm((previous) => ({
+                            ...previous,
+                            autoProposeActionable: value
+                          }));
+                        }}
+                      >
+                        <SelectTrigger
+                          id="policy-auto-propose-actionable"
+                          aria-label="Policy auto-propose actionable recommendations"
+                        >
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectPopup>
+                          {AUTO_PROPOSE_ACTIONABLE_OPTIONS.map((option) => (
+                            <SelectItem key={option.value} value={option.value}>
+                              {option.label}
+                            </SelectItem>
+                          ))}
+                        </SelectPopup>
+                      </Select>
+                      <span className="text-xs text-muted-foreground">
+                        When enabled, each recommendations run automatically creates pending order
+                        tickets for actionable rows. Manual approval is still required before submit.
                       </span>
                     </label>
 

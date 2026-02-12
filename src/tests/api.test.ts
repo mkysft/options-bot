@@ -145,6 +145,9 @@ describe("API routes", () => {
     expect(typeof payload.execution?.elapsedMs).toBe("number");
     expect(typeof payload.execution?.computeMs).toBe("number");
     expect(Array.isArray(payload.execution?.errors)).toBeTrue();
+    expect(typeof payload.policySnapshot?.autoProposeActionable).toBe("boolean");
+    expect(typeof payload.execution?.autoProposal?.enabled).toBe("boolean");
+    expect(typeof payload.execution?.autoProposal?.attempted).toBe("number");
     expect(
       payload.scanner?.ibkrScanCode === null || typeof payload.scanner?.ibkrScanCode === "string"
     ).toBeTrue();

@@ -17,6 +17,7 @@ export interface BotPolicy {
   scanTopN: number;
   ibkrScanCode: IbkrScannerCodeSetting;
   analysisDataProvider: AnalysisDataProviderSetting;
+  autoProposeActionable: boolean;
   minCompositeScore: number;
   minDirectionalProbability: number;
   dteMin: number;
@@ -57,6 +58,7 @@ export class RuntimePolicyService {
       scanTopN: 10,
       ibkrScanCode: DEFAULT_IBKR_SCANNER_CODE,
       analysisDataProvider: "ALPACA",
+      autoProposeActionable: false,
       minCompositeScore: 70,
       minDirectionalProbability: 0.57,
       dteMin: settings.dteMin,
@@ -87,6 +89,10 @@ export class RuntimePolicyService {
       analysisDataProvider: isAnalysisDataProviderSetting(patch.analysisDataProvider)
         ? (patch.analysisDataProvider.toUpperCase() as AnalysisDataProviderSetting)
         : current.analysisDataProvider,
+      autoProposeActionable:
+        typeof patch.autoProposeActionable === "boolean"
+          ? patch.autoProposeActionable
+          : current.autoProposeActionable,
       minCompositeScore: clamp(patch.minCompositeScore ?? current.minCompositeScore, -300, 300),
       minDirectionalProbability: clamp(
         patch.minDirectionalProbability ?? current.minDirectionalProbability,
@@ -180,6 +186,11 @@ export class RuntimePolicyService {
         label: "Analysis Data Provider",
         description:
           "Primary provider used for per-symbol analysis (quote/history/options). ALPACA avoids IBKR analysis calls."
+      },
+      autoProposeActionable: {
+        label: "Auto-Propose Actionable Recommendations",
+        description:
+          "Automatically create pending order tickets for actionable CALL/PUT recommendations. Manual approval is still required before broker submission."
       },
       minCompositeScore: {
         label: "Min Composite Score",
