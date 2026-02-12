@@ -4,6 +4,23 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import "./styles.css";
 import { App } from "./App";
 
+const THEME_STORAGE_KEY = "options-bot-theme";
+const applyInitialTheme = () => {
+  const root = document.documentElement;
+  let stored = "";
+  try {
+    stored = window.localStorage.getItem(THEME_STORAGE_KEY) ?? "";
+  } catch {
+    stored = "";
+  }
+  const prefersDark = window.matchMedia?.("(prefers-color-scheme: dark)").matches;
+  const theme = stored === "dark" || stored === "light" ? stored : prefersDark ? "dark" : "light";
+  root.classList.toggle("dark", theme === "dark");
+  root.style.colorScheme = theme;
+};
+
+applyInitialTheme();
+
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {

@@ -42,6 +42,7 @@ body {
 }
 
 .dark {
+  color-scheme: dark;
   --destructive-foreground: var(--color-red-400);
   --info: var(--color-blue-500);
   --info-foreground: var(--color-blue-400);
@@ -67,6 +68,13 @@ body {
   --ring: var(--color-neutral-500);
   --secondary: --alpha(var(--color-white) / 4%);
   --secondary-foreground: var(--color-neutral-100);
+}
+
+.dark body {
+  background:
+    radial-gradient(90rem 70rem at -5% -20%, #0a1e2b, transparent 62%),
+    radial-gradient(70rem 60rem at 105% -15%, #2a2117, transparent 65%),
+    #0b0f14;
 }
 
 @theme inline {

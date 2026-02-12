@@ -6,10 +6,12 @@ import {
   ChevronLeft,
   ChevronRight,
   Clock3,
+  Moon,
   ExternalLink,
   HelpCircle,
   CheckCircle2,
   Settings2,
+  Sun,
   Webhook,
   X,
   Zap,
@@ -324,15 +326,15 @@ const filterByLifecycleState = (rows, stateFilter) => {
 };
 
 const JsonBox = ({ value, empty = "No data." }) => (
-  <pre className="max-h-80 overflow-auto rounded-xl border border-slate-200 bg-white/70 p-3 text-xs leading-5 text-slate-800">
+  <pre className="max-h-80 overflow-auto rounded-xl border border-border bg-card/70 p-3 text-xs leading-5 text-foreground">
     {value ? JSON.stringify(value, null, 2) : empty}
   </pre>
 );
 
 const MetricTile = ({ label, value, emphasis = false }) => (
-  <div className="rounded-xl border border-slate-200 bg-white/70 p-3">
-    <p className="text-xs uppercase tracking-wide text-slate-500">{label}</p>
-    <p className={`mt-1 text-sm ${emphasis ? "font-semibold text-slate-950" : "text-slate-800"}`}>{value}</p>
+  <div className="rounded-xl border border-border bg-card/70 p-3">
+    <p className="text-xs uppercase tracking-wide text-muted-foreground">{label}</p>
+    <p className={`mt-1 text-sm ${emphasis ? "font-semibold text-foreground" : "text-foreground"}`}>{value}</p>
   </div>
 );
 
@@ -349,11 +351,11 @@ const PositionsPagination = ({
 
   return (
     <div className="flex flex-wrap items-center justify-end gap-2">
-      <p className="text-xs text-slate-500">
+      <p className="text-xs text-muted-foreground">
         Showing {rangeStart}-{rangeEnd} of {total}
       </p>
       <div className="flex items-center gap-1">
-        <span className="text-xs text-slate-500">Rows</span>
+        <span className="text-xs text-muted-foreground">Rows</span>
         <Select
           items={POSITION_PAGE_SIZE_ITEMS}
           value={String(pageSize)}
@@ -383,7 +385,7 @@ const PositionsPagination = ({
         >
           <ChevronLeft className="size-4" />
         </Button>
-        <span className="min-w-20 text-center text-xs text-slate-600">
+        <span className="min-w-20 text-center text-xs text-muted-foreground">
           Page {page}/{totalPages}
         </span>
         <Button
@@ -447,17 +449,17 @@ const TriggerListPopover = ({ triggers }) => {
         onMouseEnter={openPopover}
         onMouseLeave={closePopoverSoon}
       >
-        <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Trigger Sources</p>
+        <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Trigger Sources</p>
         {triggers.length > 0 ? (
-          <ul className="mt-2 space-y-1 text-xs text-slate-700">
+          <ul className="mt-2 space-y-1 text-xs text-foreground">
             {triggers.map((trigger) => (
-              <li key={trigger} className="rounded-md bg-slate-50 px-2 py-1">
+              <li key={trigger} className="rounded-md bg-muted px-2 py-1">
                 {trigger}
               </li>
             ))}
           </ul>
         ) : (
-          <p className="mt-2 text-xs text-slate-600">Trigger details unavailable.</p>
+          <p className="mt-2 text-xs text-muted-foreground">Trigger details unavailable.</p>
         )}
       </PopoverContent>
     </Popover>
@@ -549,7 +551,7 @@ const RecommendationEvidencePanel = ({ entry }) => {
   const evidence = entry?.evidence;
   if (!evidence) {
     return (
-      <div className="rounded-xl border border-slate-200 bg-white/70 p-3 text-xs text-slate-600">
+      <div className="rounded-xl border border-border bg-card/70 p-3 text-xs text-muted-foreground">
         Evidence payload unavailable for this recommendation.
       </div>
     );
@@ -568,7 +570,7 @@ const RecommendationEvidencePanel = ({ entry }) => {
   const benchmarkReturns = provenance.benchmarkReturns ?? {};
 
   return (
-    <div className="space-y-3 rounded-xl border border-slate-200 bg-white/85 p-3">
+    <div className="space-y-3 rounded-xl border border-border bg-card/85 p-3">
       <div className="flex flex-wrap items-center gap-2">
         <Badge variant={quality.passed ? "success" : "destructive"}>
           Data Gate {quality.passed ? "PASS" : "BLOCKED"}
@@ -661,7 +663,7 @@ const RecommendationEvidencePanel = ({ entry }) => {
         <MetricTile label="News Flow Source" value={formatSourceLabel(provenance.signalSources?.newsFlow)} />
       </div>
 
-      <div className="overflow-auto rounded-xl border border-slate-200">
+      <div className="overflow-auto rounded-xl border border-border">
         <Table>
           <TableHeader>
             <TableRow>
@@ -685,12 +687,12 @@ const RecommendationEvidencePanel = ({ entry }) => {
                 <TableCell>{String(gate.severity ?? "soft").toUpperCase()}</TableCell>
                 <TableCell>{gate.threshold === undefined ? "—" : String(gate.threshold)}</TableCell>
                 <TableCell>{gate.actual === undefined ? "—" : String(gate.actual)}</TableCell>
-                <TableCell className="whitespace-normal text-xs text-slate-700">{gate.details || "—"}</TableCell>
+                <TableCell className="whitespace-normal text-xs text-foreground">{gate.details || "—"}</TableCell>
               </TableRow>
             ))}
             {gateChecks.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center text-slate-500">
+                <TableCell colSpan={6} className="text-center text-muted-foreground">
                   No gate evidence found.
                 </TableCell>
               </TableRow>
@@ -699,7 +701,7 @@ const RecommendationEvidencePanel = ({ entry }) => {
         </Table>
       </div>
 
-      <div className="overflow-auto rounded-xl border border-slate-200">
+      <div className="overflow-auto rounded-xl border border-border">
         <Table>
           <TableHeader>
             <TableRow>
@@ -722,14 +724,14 @@ const RecommendationEvidencePanel = ({ entry }) => {
                 <TableCell className="whitespace-normal">
                   <div className="space-y-1">
                     <JsonBox value={indicator.value} empty="No values." />
-                    {indicator.note ? <p className="text-xs text-slate-600">{indicator.note}</p> : null}
+                    {indicator.note ? <p className="text-xs text-muted-foreground">{indicator.note}</p> : null}
                   </div>
                 </TableCell>
               </TableRow>
             ))}
             {indicators.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={4} className="text-center text-slate-500">
+                <TableCell colSpan={4} className="text-center text-muted-foreground">
                   No indicator evidence found.
                 </TableCell>
               </TableRow>
@@ -738,14 +740,14 @@ const RecommendationEvidencePanel = ({ entry }) => {
         </Table>
       </div>
 
-      <div className="rounded-xl border border-slate-200 bg-slate-50/80 p-3">
-        <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">News Articles Used</p>
+      <div className="rounded-xl border border-border bg-muted/80 p-3">
+        <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">News Articles Used</p>
         {articles.length > 0 ? (
           <div className="mt-2 space-y-2">
             {articles.slice(0, 10).map((article, index) => (
-              <div key={`${article.url || article.title}-${index}`} className="rounded-lg border border-slate-200 bg-white/80 p-2">
+              <div key={`${article.url || article.title}-${index}`} className="rounded-lg border border-border bg-card/80 p-2">
                 <div className="flex items-start justify-between gap-2">
-                  <p className="text-xs font-medium text-slate-900">{article.title || "Untitled"}</p>
+                  <p className="text-xs font-medium text-foreground">{article.title || "Untitled"}</p>
                   {article.url ? (
                     <a
                       href={article.url}
@@ -757,15 +759,15 @@ const RecommendationEvidencePanel = ({ entry }) => {
                     </a>
                   ) : null}
                 </div>
-                <p className="mt-1 text-[11px] text-slate-600">
+                <p className="mt-1 text-[11px] text-muted-foreground">
                   {article.source || "unknown"} {article.publishedAt ? `| ${new Date(article.publishedAt).toLocaleString()}` : ""}
                 </p>
-                {article.summary ? <p className="mt-1 text-xs text-slate-700">{article.summary}</p> : null}
+                {article.summary ? <p className="mt-1 text-xs text-foreground">{article.summary}</p> : null}
               </div>
             ))}
           </div>
         ) : (
-          <p className="mt-2 text-xs text-slate-600">No linked news articles were available.</p>
+          <p className="mt-2 text-xs text-muted-foreground">No linked news articles were available.</p>
         )}
       </div>
 
@@ -850,7 +852,7 @@ const RecommendationDetailsDialog = ({
 const PnlLineChart = ({ series }) => {
   if (!Array.isArray(series) || series.length < 2) {
     return (
-      <div className="rounded-xl border border-dashed border-slate-300 p-4 text-sm text-slate-500">
+      <div className="rounded-xl border border-dashed border-border/70 p-4 text-sm text-muted-foreground">
         Waiting for more risk snapshots to draw PnL trend.
       </div>
     );
@@ -873,15 +875,15 @@ const PnlLineChart = ({ series }) => {
   const zeroY = zeroInRange ? 100 - ((0 - min) / range) * 100 : null;
 
   return (
-    <div className="rounded-xl border border-slate-200 bg-white/70 p-3">
-      <div className="mb-2 flex items-center justify-between text-xs text-slate-500">
+    <div className="rounded-xl border border-border bg-card/70 p-3">
+      <div className="mb-2 flex items-center justify-between text-xs text-muted-foreground">
         <span>Day PnL Trend</span>
         <span>
           Min {signedMoney(min)} | Max {signedMoney(max)}
         </span>
       </div>
       <svg className="h-40 w-full" viewBox="0 0 100 100" preserveAspectRatio="none" role="img" aria-label="PnL line chart">
-        {zeroY !== null && <line x1="0" y1={zeroY} x2="100" y2={zeroY} stroke="currentColor" className="text-slate-300" strokeDasharray="2 2" />}
+        {zeroY !== null && <line x1="0" y1={zeroY} x2="100" y2={zeroY} stroke="currentColor" className="text-muted-foreground/70" strokeDasharray="2 2" />}
         <polyline
           points={points}
           fill="none"
@@ -915,8 +917,23 @@ const queryKeys = {
   recommendations: ["recommendations"]
 };
 
+const THEME_STORAGE_KEY = "options-bot-theme";
+const resolveInitialTheme = () => {
+  if (typeof window === "undefined") return "light";
+  let stored = "";
+  try {
+    stored = window.localStorage.getItem(THEME_STORAGE_KEY) ?? "";
+  } catch {
+    stored = "";
+  }
+  if (stored === "dark" || stored === "light") return stored;
+  if (window.matchMedia?.("(prefers-color-scheme: dark)").matches) return "dark";
+  return "light";
+};
+
 export const App = () => {
   const queryClient = useQueryClient();
+  const [theme, setTheme] = useState(resolveInitialTheme);
 
   const [symbol, setSymbol] = useState("SPY");
   const [scanResult, setScanResult] = useState(null);
@@ -1047,6 +1064,18 @@ export const App = () => {
     queryFn: api.envConfig,
     enabled: true
   });
+
+  useEffect(() => {
+    const root = document.documentElement;
+    const isDark = theme === "dark";
+    root.classList.toggle("dark", isDark);
+    root.style.colorScheme = isDark ? "dark" : "light";
+    try {
+      window.localStorage.setItem(THEME_STORAGE_KEY, theme);
+    } catch {
+      // Ignore storage errors so theme still applies in restricted environments.
+    }
+  }, [theme]);
 
   useEffect(() => {
     if (!policyQuery.data?.policy) return;
@@ -2041,12 +2070,12 @@ export const App = () => {
 
   const renderScheduleFrequency = (item) => {
     const frequency = item?.frequency;
-    if (!frequency || typeof frequency !== "object") return <span className="text-slate-400">—</span>;
+    if (!frequency || typeof frequency !== "object") return <span className="text-muted-foreground/80">—</span>;
 
     if (frequency.mode === "interval") {
       return (
-        <div className="inline-flex items-center gap-2 text-slate-700">
-          <Clock3 className="size-3.5 text-slate-500" />
+        <div className="inline-flex items-center gap-2 text-foreground">
+          <Clock3 className="size-3.5 text-muted-foreground" />
           <span>Every {formatIntervalShort(Number(frequency.intervalMs))}</span>
         </div>
       );
@@ -2061,7 +2090,7 @@ export const App = () => {
         : "event";
 
       return (
-        <div className="inline-flex items-center gap-2 text-slate-700">
+        <div className="inline-flex items-center gap-2 text-foreground">
           <TriggerListPopover triggers={triggers} />
           <span>{intervalText}</span>
         </div>
@@ -2072,8 +2101,8 @@ export const App = () => {
       const method = String(frequency.method ?? item?.method ?? "").toUpperCase();
       const endpoint = String(frequency.endpoint ?? item?.endpoint ?? "");
       return (
-        <div className="inline-flex items-center gap-2 text-slate-700">
-          <Webhook className="size-3.5 text-slate-500" />
+        <div className="inline-flex items-center gap-2 text-foreground">
+          <Webhook className="size-3.5 text-muted-foreground" />
           <span className="font-mono text-[11px]">
             {method} {endpoint}
           </span>
@@ -2081,7 +2110,7 @@ export const App = () => {
       );
     }
 
-    return <span className="text-slate-400">—</span>;
+    return <span className="text-muted-foreground/80">—</span>;
   };
 
   return (
@@ -2162,7 +2191,7 @@ export const App = () => {
               />
             </div>
 
-            <div className="max-h-[55vh] overflow-auto rounded-xl border border-slate-200">
+            <div className="max-h-[55vh] overflow-auto rounded-xl border border-border">
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -2190,14 +2219,14 @@ export const App = () => {
                       </TableCell>
                       <TableCell className="text-xs">{formatTimestamp(row.quote?.lastAt)}</TableCell>
                       <TableCell className="text-xs">{formatTimestamp(row.option?.lastAt)}</TableCell>
-                      <TableCell className="max-w-96 text-xs text-slate-600">
+                      <TableCell className="max-w-96 text-xs text-muted-foreground">
                         {row.quote?.note || row.option?.note || "—"}
                       </TableCell>
                     </TableRow>
                   ))}
                   {entitlementRows.length === 0 && (
                     <TableRow>
-                      <TableCell colSpan={6} className="text-center text-slate-500">
+                      <TableCell colSpan={6} className="text-center text-muted-foreground">
                         {marketDataDiagnosticsQuery.isFetching
                           ? "Loading entitlement diagnostics..."
                           : "No entitlement diagnostics captured yet."}
@@ -2320,7 +2349,7 @@ export const App = () => {
       />
       <div className={`min-h-screen p-4 md:p-6 ${liveAccountConnected ? "pt-14 md:pt-16" : ""}`}>
         <div className="mx-auto flex w-full max-w-7xl flex-col gap-4">
-          <Card className="border border-slate-200 bg-white/75 backdrop-blur">
+          <Card className="border border-border bg-card/75 backdrop-blur">
             <CardHeader className="flex items-start justify-between gap-3 md:flex-row md:items-center">
               <div>
                 <CardTitle className="text-2xl font-semibold tracking-tight">Options Bot Control Room</CardTitle>
@@ -2372,6 +2401,14 @@ export const App = () => {
                   <Button variant="outline" onClick={() => setRunTimingOpen(true)}>
                     <Clock3 className="size-4" /> Schedule
                   </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => setTheme((previous) => (previous === "dark" ? "light" : "dark"))}
+                    aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
+                  >
+                    {theme === "dark" ? <Sun className="size-4" /> : <Moon className="size-4" />}
+                    {theme === "dark" ? "Light" : "Dark"}
+                  </Button>
                   <Button variant="outline" onClick={() => setSettingsOpen(true)}>
                     <Settings2 className="size-4" /> Settings
                   </Button>
@@ -2382,7 +2419,7 @@ export const App = () => {
             <CardContent className="space-y-3">
               <div className="grid grid-cols-1 gap-3 md:grid-cols-[220px_120px_170px_170px_220px_1fr_auto_auto_auto]">
                 <div className="space-y-1">
-                  <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Recommendations</p>
+                  <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Recommendations</p>
                   <Button
                     variant="outline"
                     disabled={
@@ -2418,7 +2455,7 @@ export const App = () => {
                   </Button>
                 </div>
                 <label htmlFor="control-scan-top-n" className="block space-y-1">
-                  <span className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Top N</span>
+                  <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Top N</span>
                   <Input
                     id="control-scan-top-n"
                     name="scan_top_n"
@@ -2438,7 +2475,7 @@ export const App = () => {
                   />
                 </label>
                 <div className="space-y-1">
-                  <label htmlFor="control-ibkr-screener-mode" className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+                  <label htmlFor="control-ibkr-screener-mode" className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
                     Screener Mode
                   </label>
                   <Select
@@ -2470,7 +2507,7 @@ export const App = () => {
                   </Select>
                 </div>
                 <div className="space-y-1">
-                  <label htmlFor="control-analysis-provider" className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+                  <label htmlFor="control-analysis-provider" className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
                     Analysis Data
                   </label>
                   <Select
@@ -2502,7 +2539,7 @@ export const App = () => {
                   </Select>
                 </div>
                 <div className="space-y-1">
-                  <label htmlFor="control-scanner-provider-order" className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+                  <label htmlFor="control-scanner-provider-order" className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
                     Scanner Source
                   </label>
                   <Select
@@ -2538,7 +2575,7 @@ export const App = () => {
                   </Select>
                 </div>
                 <label htmlFor="control-symbol" className="block space-y-1">
-                  <span className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Symbol</span>
+                  <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Symbol</span>
                   <Input
                     id="control-symbol"
                     name="symbol"
@@ -2548,7 +2585,7 @@ export const App = () => {
                   />
                 </label>
                 <div className="space-y-1">
-                  <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Decision</p>
+                  <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Decision</p>
                   <Button
                     variant="outline"
                     disabled={decisionMutation.isPending || symbol.trim().length === 0}
@@ -2559,7 +2596,7 @@ export const App = () => {
                   </Button>
                 </div>
                 <div className="space-y-1">
-                  <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Raw Analysis</p>
+                  <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Raw Analysis</p>
                   <div className="flex items-center gap-1">
                     <Button
                       disabled={
@@ -2590,13 +2627,13 @@ export const App = () => {
                     <Popover>
                       <PopoverTrigger
                         aria-label="What does candidate snapshot do?"
-                        className="inline-flex size-8 items-center justify-center rounded-md border border-slate-200 text-slate-600 hover:bg-slate-50"
+                        className="inline-flex size-8 items-center justify-center rounded-md border border-border text-muted-foreground hover:bg-muted"
                       >
                         <HelpCircle className="size-4" />
                       </PopoverTrigger>
                       <PopoverContent align="start" className="w-80">
-                        <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Candidate Snapshot</p>
-                        <p className="mt-2 text-xs text-slate-700">
+                        <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Candidate Snapshot</p>
+                        <p className="mt-2 text-xs text-foreground">
                           Runs `POST /scan` and stores full per-symbol analysis payloads for debugging signals, sources,
                           and indicator coverage. Use this when you want raw diagnostics, not ranked recommendations.
                         </p>
@@ -2605,7 +2642,7 @@ export const App = () => {
                   </div>
                 </div>
                 <div className="space-y-1">
-                  <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Simulation</p>
+                  <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Simulation</p>
                   <Button variant="outline" disabled={backtestMutation.isPending} onClick={() => backtestMutation.mutate()}>
                     {backtestMutation.isPending && <Spinner className="h-4 w-4" />}
                     {backtestMutation.isPending ? "Backtesting..." : "Run Backtest"}
@@ -2613,18 +2650,18 @@ export const App = () => {
                 </div>
               </div>
 
-              <p className="text-xs text-slate-500">
+              <p className="text-xs text-muted-foreground">
                 Scanner provider order:{" "}
                 {scannerProviderDraftOrder || "not set"}
                 {scannerProviderDirty ? " (will be applied on next scan)" : ""}
                 {scannerProviderPersisting ? " (saving...)" : ""}
               </p>
 
-              <div className="rounded-xl border border-slate-200 bg-white/70 p-3">
+              <div className="rounded-xl border border-border bg-card/70 p-3">
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div>
-                    <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Latest Decision Result</p>
-                    <p className="mt-1 text-xs text-slate-600">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Latest Decision Result</p>
+                    <p className="mt-1 text-xs text-muted-foreground">
                       Quick outcome from `Get Decision` or order proposal. Open Decision Output for full payload and logs.
                     </p>
                   </div>
@@ -2634,7 +2671,7 @@ export const App = () => {
                   </Button>
                 </div>
                 {decisionMutation.isPending ? (
-                  <div className="mt-3 flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700">
+                  <div className="mt-3 flex items-center gap-2 rounded-lg border border-border bg-muted p-3 text-sm text-foreground">
                     <Spinner className="h-4 w-4" />
                     Computing decision for {symbol.trim().toUpperCase() || "selected symbol"}...
                   </div>
@@ -2700,7 +2737,7 @@ export const App = () => {
                       />
                     </div>
                     {decisionSummary.rationale ? (
-                      <p className="rounded-lg border border-slate-200 bg-slate-50 p-2 text-xs text-slate-700">
+                      <p className="rounded-lg border border-border bg-muted p-2 text-xs text-foreground">
                         {decisionSummary.rationale}
                       </p>
                     ) : null}
@@ -2711,7 +2748,7 @@ export const App = () => {
                     ) : null}
                   </div>
                 ) : (
-                  <p className="mt-3 rounded-lg border border-dashed border-slate-300 p-3 text-xs text-slate-500">
+                  <p className="mt-3 rounded-lg border border-dashed border-border/70 p-3 text-xs text-muted-foreground">
                     No decision has been requested yet.
                   </p>
                 )}
@@ -2749,59 +2786,59 @@ export const App = () => {
                   <MetricTile label="Day Unrealized" value={ibkrConnected ? signedMoney(accountSummary?.dayUnrealizedPnl ?? 0) : "—"} />
                 </div>
                 <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-                  <div className="rounded-xl border border-slate-200 bg-white/70 p-3">
-                    <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Risk and Exposure</p>
+                  <div className="rounded-xl border border-border bg-card/70 p-3">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Risk and Exposure</p>
                     <div className="mt-2 grid grid-cols-[1fr_auto] gap-x-3 gap-y-1 text-xs">
-                      <span className="text-slate-500">Drawdown</span>
-                      <span className="text-right font-medium text-slate-800">
+                      <span className="text-muted-foreground">Drawdown</span>
+                      <span className="text-right font-medium text-foreground">
                         {pctFmt(accountSummary?.dailyDrawdownPct ?? 0)}
                       </span>
-                      <span className="text-slate-500">Open Positions (Local)</span>
-                      <span className="text-right font-medium text-slate-800">
+                      <span className="text-muted-foreground">Open Positions (Local)</span>
+                      <span className="text-right font-medium text-foreground">
                         {String(accountSummary?.openPositions ?? 0)}
                       </span>
-                      <span className="text-slate-500">Open Positions (Broker)</span>
-                      <span className="text-right font-medium text-slate-800">
+                      <span className="text-muted-foreground">Open Positions (Broker)</span>
+                      <span className="text-right font-medium text-foreground">
                         {accountSummary?.brokerOpenPositions === null ||
                         accountSummary?.brokerOpenPositions === undefined
                           ? "n/a"
                           : String(accountSummary.brokerOpenPositions)}
                       </span>
-                      <span className="text-slate-500">Pending Approvals</span>
-                      <span className="text-right font-medium text-slate-800">
+                      <span className="text-muted-foreground">Pending Approvals</span>
+                      <span className="text-right font-medium text-foreground">
                         {String(accountSummary?.pendingApprovals ?? 0)}
                       </span>
-                      <span className="text-slate-500">Acceptance Gate</span>
+                      <span className="text-muted-foreground">Acceptance Gate</span>
                       <span className="text-right">
                         <Badge variant={acceptanceGatePass ? "success" : "warning"}>
                           {acceptanceGatePass ? "PASS" : "IN PROGRESS"}
                         </Badge>
                       </span>
-                      <span className="text-slate-500">Gate Progress</span>
-                      <span className="text-right font-medium text-slate-800">
+                      <span className="text-muted-foreground">Gate Progress</span>
+                      <span className="text-right font-medium text-foreground">
                         {`${acceptanceGateObservedDays.toFixed(1)}d / ${acceptanceGateCompletedTrades} trades`}
                       </span>
-                      <span className="text-slate-500">Halt Reasons</span>
-                      <span className="text-right font-medium text-slate-800">
+                      <span className="text-muted-foreground">Halt Reasons</span>
+                      <span className="text-right font-medium text-foreground">
                         {accountSummary?.haltReasons?.join(", ") || "none"}
                       </span>
                     </div>
                   </div>
-                  <div className="rounded-xl border border-slate-200 bg-white/70 p-3">
-                    <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Broker Link</p>
+                  <div className="rounded-xl border border-border bg-card/70 p-3">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Broker Link</p>
                     <div className="mt-2 grid grid-cols-[1fr_auto] gap-x-3 gap-y-1 text-xs">
-                      <span className="text-slate-500">Broker Source</span>
-                      <span className="text-right font-medium text-slate-800">
+                      <span className="text-muted-foreground">Broker Source</span>
+                      <span className="text-right font-medium text-foreground">
                         {brokerAccount?.source ?? "unavailable"}
                       </span>
-                      <span className="text-slate-500">Broker Account</span>
-                      <span className="text-right font-medium text-slate-800">
+                      <span className="text-muted-foreground">Broker Account</span>
+                      <span className="text-right font-medium text-foreground">
                         {brokerAccount?.accountCode ?? "n/a"}
                       </span>
-                      <span className="text-slate-500">IBKR Session</span>
-                      <span className="text-right font-medium text-slate-800">{ibkrSessionMode}</span>
-                      <span className="text-slate-500">Bot Env</span>
-                      <span className="text-right font-medium text-slate-800">{botMode}</span>
+                      <span className="text-muted-foreground">IBKR Session</span>
+                      <span className="text-right font-medium text-foreground">{ibkrSessionMode}</span>
+                      <span className="text-muted-foreground">Bot Env</span>
+                      <span className="text-right font-medium text-foreground">{botMode}</span>
                     </div>
                   </div>
                 </div>
@@ -2828,25 +2865,25 @@ export const App = () => {
                   ) : null}
                   {ibkrStatusQuery.isFetching && <Spinner className="h-4 w-4" />}
                 </div>
-                <div className="grid grid-cols-2 gap-x-3 gap-y-1 rounded-xl border border-slate-200 bg-white/70 p-2 text-xs">
-                  <span className="text-slate-500">Enabled</span>
-                  <span className="text-right font-medium text-slate-800">{String(Boolean(ibkrStatus?.enabled))}</span>
-                  <span className="text-slate-500">Host:Port</span>
-                  <span className="text-right font-medium text-slate-800">{`${ibkrStatus?.host ?? "-"}:${ibkrStatus?.port ?? "-"}`}</span>
-                  <span className="text-slate-500">Client ID</span>
-                  <span className="text-right font-medium text-slate-800">{String(ibkrStatus?.clientId ?? "-")}</span>
-                  <span className="text-slate-500">Latency (ms)</span>
-                  <span className="text-right font-medium text-slate-800">{String(ibkrStatus?.latencyMs ?? "-")}</span>
+                <div className="grid grid-cols-2 gap-x-3 gap-y-1 rounded-xl border border-border bg-card/70 p-2 text-xs">
+                  <span className="text-muted-foreground">Enabled</span>
+                  <span className="text-right font-medium text-foreground">{String(Boolean(ibkrStatus?.enabled))}</span>
+                  <span className="text-muted-foreground">Host:Port</span>
+                  <span className="text-right font-medium text-foreground">{`${ibkrStatus?.host ?? "-"}:${ibkrStatus?.port ?? "-"}`}</span>
+                  <span className="text-muted-foreground">Client ID</span>
+                  <span className="text-right font-medium text-foreground">{String(ibkrStatus?.clientId ?? "-")}</span>
+                  <span className="text-muted-foreground">Latency (ms)</span>
+                  <span className="text-right font-medium text-foreground">{String(ibkrStatus?.latencyMs ?? "-")}</span>
                 </div>
-                <p className="rounded-xl border border-slate-200 bg-white/70 p-2 text-xs text-slate-600">
+                <p className="rounded-xl border border-border bg-card/70 p-2 text-xs text-muted-foreground">
                   {ibkrStatus?.message ?? "IBKR status unavailable."}
                 </p>
                 {!!ibkrStatus?.probedPorts?.length && (
-                  <p className="rounded-xl border border-slate-200 bg-white/70 p-2 text-xs text-slate-600">
+                  <p className="rounded-xl border border-border bg-card/70 p-2 text-xs text-muted-foreground">
                     Probed ports: {ibkrStatus.probedPorts.join(", ")}
                   </p>
                 )}
-                <div className="rounded-xl border border-slate-200 bg-white/70 p-2">
+                <div className="rounded-xl border border-border bg-card/70 p-2">
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <Badge variant={entitlementGateBadge.variant}>{entitlementGateBadge.label}</Badge>
                     <div className="flex items-center gap-2">
@@ -2863,29 +2900,29 @@ export const App = () => {
                       </Button>
                     </div>
                   </div>
-                  <p className="mt-2 text-xs text-slate-600">
+                  <p className="mt-2 text-xs text-muted-foreground">
                     Quotes: live {String(entitlementSummary?.quoteCounts?.live ?? 0)} | delayed{" "}
                     {String(entitlementSummary?.quoteCounts?.delayed ?? 0)} | blocked{" "}
                     {String(entitlementSummary?.quoteCounts?.blocked ?? 0)}
                   </p>
-                  <p className="mt-1 text-xs text-slate-600">
+                  <p className="mt-1 text-xs text-muted-foreground">
                     Options: live {String(entitlementSummary?.optionCounts?.live ?? 0)} | delayed{" "}
                     {String(entitlementSummary?.optionCounts?.delayed ?? 0)} | blocked{" "}
                     {String(entitlementSummary?.optionCounts?.blocked ?? 0)}
                   </p>
-                  <p className="mt-1 text-xs text-slate-600">
+                  <p className="mt-1 text-xs text-muted-foreground">
                     Delayed-only mode: {marketDataDiagnostics?.brokerBackoffs?.delayedOnly ? "yes" : "no"}
                   </p>
                 </div>
-                <div className="rounded-xl border border-slate-200 bg-white/70 p-2">
-                  <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+                <div className="rounded-xl border border-border bg-card/70 p-2">
+                  <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
                     Integration Readiness
                   </p>
                   <div className="mt-2 grid grid-cols-2 gap-x-3 gap-y-1.5">
                     {integrationStatusItems.map((integration) => (
                       <div
                         key={integration.id}
-                        className="inline-flex items-center gap-1.5 text-xs text-slate-700"
+                        className="inline-flex items-center gap-1.5 text-xs text-foreground"
                         title={integration.note || ""}
                       >
                         {integration.configured ? (
@@ -2897,7 +2934,7 @@ export const App = () => {
                       </div>
                     ))}
                     {integrationStatusItems.length === 0 && (
-                      <p className="col-span-2 text-xs text-slate-500">Integration status unavailable.</p>
+                      <p className="col-span-2 text-xs text-muted-foreground">Integration status unavailable.</p>
                     )}
                   </div>
                 </div>
@@ -2933,8 +2970,8 @@ export const App = () => {
                   </Button>
                 </div>
                 {lastLaunchResult && (
-                  <div className="rounded-xl border border-slate-200 bg-white/70 p-2 text-xs text-slate-600">
-                    <p className="font-medium text-slate-800">
+                  <div className="rounded-xl border border-border bg-card/70 p-2 text-xs text-muted-foreground">
+                    <p className="font-medium text-foreground">
                       Last launch: {String(lastLaunchResult.target).toUpperCase()} /{" "}
                       {lastLaunchResult.launched ? "success" : "failed"}
                     </p>
@@ -2979,7 +3016,7 @@ export const App = () => {
               </div>
             </CardHeader>
             <CardContent className="overflow-auto">
-              <div className="mb-3 rounded-xl border border-slate-200 bg-white/70 p-3 text-xs">
+              <div className="mb-3 rounded-xl border border-border bg-card/70 p-3 text-xs">
                 <div className="flex flex-wrap items-center gap-2">
                   <Badge variant={recommendationScanner?.scannerUsed ? "success" : "outline"}>
                     Scanner {recommendationScanner?.scannerUsed ? "USED" : "NOT USED"}
@@ -2987,32 +3024,32 @@ export const App = () => {
                   <Badge variant="outline">
                     Source: {String(recommendationScanner?.scannerSource ?? "none").replace("_", " ")}
                   </Badge>
-                  <span className="text-slate-600">
+                  <span className="text-muted-foreground">
                     Requested: {String(recommendationScanner?.requestedUniverseSize ?? "-")}
                   </span>
-                  <span className="text-slate-600">
+                  <span className="text-muted-foreground">
                     Evaluated: {String(recommendationScanner?.evaluatedUniverseSize ?? "-")}
                   </span>
-                  <span className="text-slate-600">
+                  <span className="text-muted-foreground">
                     Discovered: {String(recommendationScanner?.discoveredSymbols?.length ?? 0)}
                   </span>
-                  <span className="text-slate-600">
+                  <span className="text-muted-foreground">
                     Screener Mode: {String(recommendationScanner?.ibkrScanCode ?? "n/a")}
                   </span>
                 </div>
-                <p className="mt-2 text-slate-600">
+                <p className="mt-2 text-muted-foreground">
                   {recommendationScanner?.discoveredSymbols?.length
                     ? `Discovered symbols: ${recommendationScanner.discoveredSymbols.join(", ")}`
                     : "Discovered symbols: none (scanner returned no usable additions)."}
                 </p>
-                <p className="mt-1 text-slate-600">
+                <p className="mt-1 text-muted-foreground">
                   Providers used:{" "}
                   {Array.isArray(recommendationScanner?.scannerProvidersUsed) &&
                   recommendationScanner.scannerProvidersUsed.length > 0
                     ? recommendationScanner.scannerProvidersUsed.join(", ")
                     : "none"}
                 </p>
-                <p className="mt-1 text-slate-600">
+                <p className="mt-1 text-muted-foreground">
                   Providers tried:{" "}
                   {Array.isArray(recommendationScanner?.scannerProvidersTried) &&
                   recommendationScanner.scannerProvidersTried.length > 0
@@ -3021,7 +3058,7 @@ export const App = () => {
                 </p>
                 {Array.isArray(recommendationScanner?.scannerProviderRanking) &&
                 recommendationScanner.scannerProviderRanking.length > 0 ? (
-                  <p className="mt-1 text-slate-600">
+                  <p className="mt-1 text-muted-foreground">
                     Quality order:{" "}
                     {recommendationScanner.scannerProviderRanking
                       .map((entry) => `${entry.provider} (${Number(entry.score ?? 0).toFixed(2)})`)
@@ -3029,11 +3066,11 @@ export const App = () => {
                   </p>
                 ) : null}
                 {recommendationScanner?.scannerFallbackReason ? (
-                  <p className="mt-1 text-slate-600">
+                  <p className="mt-1 text-muted-foreground">
                     Scanner fallback note: {recommendationScanner.scannerFallbackReason}
                   </p>
                 ) : null}
-                <div className="mt-2 rounded-lg border border-slate-200 bg-slate-50 p-2 text-slate-600">
+                <div className="mt-2 rounded-lg border border-border bg-muted p-2 text-muted-foreground">
                   <p>
                     Recommendation runtime:{" "}
                     {recommendationRunSecondsLabel}{" "}
@@ -3065,7 +3102,7 @@ export const App = () => {
                       </ul>
                     </div>
                   ) : (
-                    <p className="mt-1 text-slate-500">
+                    <p className="mt-1 text-muted-foreground">
                       {recommendationsQuery.isFetching
                         ? "Recommendation run in progress..."
                         : "No execution errors reported in the latest run."}
@@ -3073,7 +3110,7 @@ export const App = () => {
                   )}
                 </div>
                 {latestScannerLog ? (
-                  <div className="mt-2 rounded-lg border border-slate-200 bg-slate-50 p-2 text-slate-600">
+                  <div className="mt-2 rounded-lg border border-border bg-muted p-2 text-muted-foreground">
                     <p>
                       Last scanner call: {new Date(latestScannerLog.startedAt).toLocaleString()} |{" "}
                       {latestScannerLog.status.toUpperCase()} | {latestScannerLog.durationMs}ms
@@ -3083,7 +3120,7 @@ export const App = () => {
                     ) : null}
                   </div>
                 ) : (
-                  <p className="mt-2 text-slate-500">No scanner API log entries yet.</p>
+                  <p className="mt-2 text-muted-foreground">No scanner API log entries yet.</p>
                 )}
               </div>
               <Table>
@@ -3112,7 +3149,7 @@ export const App = () => {
                     return (
                       <TableRow
                         key={key}
-                        className="cursor-pointer hover:bg-slate-50/80"
+                        className="cursor-pointer hover:bg-muted/80"
                         onClick={() => openRecommendationDetails(entry)}
                       >
                         <TableCell>{entry.rank}</TableCell>
@@ -3150,7 +3187,7 @@ export const App = () => {
                   })}
                   {recommendations.length === 0 && (
                     <TableRow>
-                      <TableCell colSpan={10} className="text-center text-slate-500">
+                      <TableCell colSpan={10} className="text-center text-muted-foreground">
                         {!ibkrConnected
                           ? "Recommendations paused until IBKR is connected."
                           : recommendationsQuery.isLoading || recommendationsQuery.isFetching
@@ -3163,10 +3200,10 @@ export const App = () => {
                   )}
                 </TableBody>
               </Table>
-              <p className="mt-2 text-xs text-slate-500">
+              <p className="mt-2 text-xs text-muted-foreground">
                 Click any recommendation row to open full evidence details in a modal.
               </p>
-              <p className="mt-3 text-xs text-slate-500">
+              <p className="mt-3 text-xs text-muted-foreground">
                 Actionable symbols now: {actionableRecommendations.map((entry) => entry.symbol).join(", ") || "none"}.
               </p>
             </CardContent>
@@ -3237,7 +3274,7 @@ export const App = () => {
                         ))}
                         {pendingOrders.length === 0 && (
                           <TableRow>
-                            <TableCell colSpan={9} className="text-center text-slate-500">
+                            <TableCell colSpan={9} className="text-center text-muted-foreground">
                               No pending orders.
                             </TableCell>
                           </TableRow>
@@ -3251,7 +3288,7 @@ export const App = () => {
                 </TabsContent>
                 <TabsContent value="api-logs" className="mt-3 space-y-3">
                   <div className="flex flex-wrap items-center justify-between gap-2">
-                    <p className="text-xs text-slate-500">
+                    <p className="text-xs text-muted-foreground">
                       Showing latest {apiRequestLogs.length} internal/external API requests.
                     </p>
                     <Button
@@ -3305,7 +3342,7 @@ export const App = () => {
                         ))}
                         {apiRequestLogs.length === 0 && (
                           <TableRow>
-                            <TableCell colSpan={9} className="text-center text-slate-500">
+                            <TableCell colSpan={9} className="text-center text-muted-foreground">
                               {apiLogsQuery.isLoading ? "Loading API logs..." : "No API request logs yet."}
                             </TableCell>
                           </TableRow>
@@ -3322,7 +3359,7 @@ export const App = () => {
                 </TabsContent>
                 <TabsContent value="acceptance-gate" className="mt-3 space-y-3">
                   <div className="flex flex-wrap items-center justify-between gap-2">
-                    <p className="text-xs text-slate-500">
+                    <p className="text-xs text-muted-foreground">
                       Tracks paper-run acceptance criteria for live-shadow readiness.
                     </p>
                     <Button
@@ -3380,14 +3417,14 @@ export const App = () => {
                       </div>
 
                       <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-                        <div className="rounded-xl border border-slate-200 bg-white/70 p-3">
-                          <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Checks</p>
+                        <div className="rounded-xl border border-border bg-card/70 p-3">
+                          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Checks</p>
                           <div className="mt-2 space-y-2">
                             {Object.entries(ACCEPTANCE_CHECK_LABELS).map(([key, label]) => {
                               const passed = Boolean(acceptanceGate.checks?.[key]);
                               return (
                                 <div key={key} className="flex items-center justify-between gap-2 text-xs">
-                                  <span className="text-slate-700">{label}</span>
+                                  <span className="text-foreground">{label}</span>
                                   <Badge variant={passed ? "success" : "warning"}>
                                     {passed ? "PASS" : "PENDING"}
                                   </Badge>
@@ -3396,21 +3433,21 @@ export const App = () => {
                             })}
                           </div>
                         </div>
-                        <div className="rounded-xl border border-slate-200 bg-white/70 p-3">
-                          <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Notes</p>
+                        <div className="rounded-xl border border-border bg-card/70 p-3">
+                          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Notes</p>
                           {Array.isArray(acceptanceGate.notes) && acceptanceGate.notes.length > 0 ? (
-                            <ul className="mt-2 space-y-1 text-xs text-slate-700">
+                            <ul className="mt-2 space-y-1 text-xs text-foreground">
                               {acceptanceGate.notes.map((note) => (
                                 <li key={note}>{note}</li>
                               ))}
                             </ul>
                           ) : (
-                            <p className="mt-2 text-xs text-slate-600">No additional notes.</p>
+                            <p className="mt-2 text-xs text-muted-foreground">No additional notes.</p>
                           )}
                         </div>
                       </div>
 
-                      <div className="overflow-auto rounded-xl border border-slate-200">
+                      <div className="overflow-auto rounded-xl border border-border">
                         <Table>
                           <TableHeader>
                             <TableRow>
@@ -3431,7 +3468,7 @@ export const App = () => {
                             ))}
                             {(acceptanceGate.violations?.items ?? []).length === 0 ? (
                               <TableRow>
-                                <TableCell colSpan={4} className="text-center text-slate-500">
+                                <TableCell colSpan={4} className="text-center text-muted-foreground">
                                   No violation records found.
                                 </TableCell>
                               </TableRow>
@@ -3542,7 +3579,7 @@ export const App = () => {
                     {runActions.map((item) => (
                       <TableRow key={item.id}>
                         <TableCell className="font-medium">{item.label}</TableCell>
-                        <TableCell className="max-w-80 text-xs text-slate-600">
+                        <TableCell className="max-w-80 text-xs text-muted-foreground">
                           {renderScheduleFrequency(item)}
                         </TableCell>
                         <TableCell className="text-xs">{formatTimestamp(item.lastAttemptAt)}</TableCell>
@@ -3554,14 +3591,14 @@ export const App = () => {
                         <TableCell className="text-xs">
                           {formatTimestampWithCountdown(item.nextAutoRunAt)}
                         </TableCell>
-                        <TableCell className="max-w-56 text-xs text-slate-600">
+                        <TableCell className="max-w-56 text-xs text-muted-foreground">
                           {item.note || "—"}
                         </TableCell>
                       </TableRow>
                     ))}
                     {runActions.length === 0 && (
                       <TableRow>
-                        <TableCell colSpan={8} className="text-center text-slate-500">
+                        <TableCell colSpan={8} className="text-center text-muted-foreground">
                           {runStatusQuery.isLoading ? "Loading run timing..." : "No run timing data yet."}
                         </TableCell>
                       </TableRow>
@@ -3591,12 +3628,12 @@ export const App = () => {
               <CardContent className="max-h-[calc(88vh-110px)] space-y-3 overflow-auto">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <div className="space-y-0.5">
-                    <p className="text-xs text-slate-500">
+                    <p className="text-xs text-muted-foreground">
                       Source: {positionsQuery.data?.broker?.source ?? "unavailable"} | Account:{" "}
                       {positionsQuery.data?.broker?.accountCode ?? "n/a"} | Link:{" "}
                       {positionsQuery.data?.connectivity?.reachable ? "connected" : "disconnected"}
                     </p>
-                    <p className="text-xs text-slate-500">
+                    <p className="text-xs text-muted-foreground">
                       Last fetched:{" "}
                       {positionsQuery.dataUpdatedAt
                         ? new Date(positionsQuery.dataUpdatedAt).toLocaleString()
@@ -3665,14 +3702,14 @@ export const App = () => {
                   />
                 </div>
 
-                <div className="rounded-xl border border-slate-200 bg-white/70 p-3">
+                <div className="rounded-xl border border-border bg-card/70 p-3">
                   <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
                     <div className="flex flex-wrap items-center gap-2">
-                      <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                      <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                         Broker Positions ({brokerPositionsFiltered.length}/{brokerPositions.length})
                       </p>
                       <div className="flex items-center gap-1">
-                        <span className="text-xs text-slate-500">State</span>
+                        <span className="text-xs text-muted-foreground">State</span>
                         <Select
                           name="broker_position_state_filter"
                           items={POSITION_STATE_FILTER_OPTIONS}
@@ -3762,7 +3799,7 @@ export const App = () => {
                               {position.secType === "OPT" ? (
                                 <div className="space-y-0.5">
                                   <p>Strike {position.strike !== null ? numberFmt.format(position.strike) : "-"}</p>
-                                  <p className="text-slate-600">
+                                  <p className="text-muted-foreground">
                                     Underlying{" "}
                                     {typeof position.underlying?.last === "number"
                                       ? currencyFmt.format(position.underlying.last)
@@ -3780,7 +3817,7 @@ export const App = () => {
                                 ? currencyFmt.format(position.costBreakdown.totalCostInclFees)
                                 : "-"}
                               {position.costBreakdown?.feeStatus === "unavailable" ? (
-                                <p className="text-[10px] text-slate-500">fees unavailable</p>
+                                <p className="text-[10px] text-muted-foreground">fees unavailable</p>
                               ) : null}
                             </TableCell>
                             <TableCell>
@@ -3836,10 +3873,10 @@ export const App = () => {
                                   {formatStaleness(marketDataStalenessMs)}
                                 </Badge>
                               ) : (
-                                <span className="text-slate-400">unknown</span>
+                                <span className="text-muted-foreground/80">unknown</span>
                               )}
                               {Number.isFinite(marketDataUpdatedAtMs) ? (
-                                <p className="text-[10px] text-slate-500">
+                                <p className="text-[10px] text-muted-foreground">
                                   tick {new Date(marketDataUpdatedAtMs).toLocaleTimeString()}
                                 </p>
                               ) : null}
@@ -3863,7 +3900,7 @@ export const App = () => {
                                   <p className="font-mono text-[11px]">
                                     {position.attribution.linkedOrderId.slice(0, 8)}...
                                   </p>
-                                  <p className="text-slate-500">
+                                  <p className="text-muted-foreground">
                                     {position.attribution.recommendation?.action ?? "-"} · score{" "}
                                     {typeof position.attribution.recommendation?.compositeScore === "number"
                                       ? numberFmt.format(position.attribution.recommendation.compositeScore)
@@ -3871,7 +3908,7 @@ export const App = () => {
                                   </p>
                                 </div>
                               ) : (
-                                <span className="text-slate-400">—</span>
+                                <span className="text-muted-foreground/80">—</span>
                               )}
                             </TableCell>
                           </TableRow>
@@ -3879,7 +3916,7 @@ export const App = () => {
                         })}
                         {brokerPositionsFiltered.length === 0 && (
                           <TableRow>
-                            <TableCell colSpan={15} className="text-center text-slate-500">
+                            <TableCell colSpan={15} className="text-center text-muted-foreground">
                               {positionsQuery.isLoading
                                 ? "Loading broker positions..."
                                 : brokerPositions.length === 0
@@ -3893,19 +3930,19 @@ export const App = () => {
                   </div>
                 </div>
 
-                <div className="rounded-xl border border-slate-200 bg-white/70 p-3">
+                <div className="rounded-xl border border-border bg-card/70 p-3">
                   <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
                     <div>
-                      <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                      <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                         Local Position Ledger ({localPositionsFiltered.length}/{localPositions.length})
                       </p>
-                      <p className="text-xs text-slate-500">
+                      <p className="text-xs text-muted-foreground">
                         Marked open positions: {positionsSummary?.localMarkedPositions ?? 0} /{" "}
                         {positionsSummary?.localOpenPositions ?? localPositions.length}
                       </p>
                     </div>
                     <div className="flex items-center gap-1">
-                      <span className="text-xs text-slate-500">State</span>
+                      <span className="text-xs text-muted-foreground">State</span>
                       <Select
                         name="local_position_state_filter"
                         items={POSITION_STATE_FILTER_OPTIONS}
@@ -4026,7 +4063,7 @@ export const App = () => {
                         ))}
                         {localPositionsFiltered.length === 0 && (
                           <TableRow>
-                            <TableCell colSpan={13} className="text-center text-slate-500">
+                            <TableCell colSpan={13} className="text-center text-muted-foreground">
                               {localPositions.length === 0
                                 ? "No local position history tracked yet."
                                 : "No local positions match the selected state filter."}
@@ -4066,8 +4103,8 @@ export const App = () => {
                   <TabsContent value="policy" className="mt-4 space-y-4">
                     <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
                       {POLICY_SECTIONS.map((section) => (
-                        <div key={section.title} className="rounded-xl border border-slate-200 p-3">
-                          <h3 className="mb-3 font-semibold text-slate-900">{section.title}</h3>
+                        <div key={section.title} className="rounded-xl border border-border p-3">
+                          <h3 className="mb-3 font-semibold text-foreground">{section.title}</h3>
                           <div className="space-y-3">
                             {section.fields.map((field) => {
                               const guideline = policyQuery.data?.guidelines?.[field] ?? {};
@@ -4086,7 +4123,7 @@ export const App = () => {
                                   : undefined;
                               return (
                                 <label key={field} htmlFor={policyInputId} className="block space-y-1">
-                                  <span className="text-sm font-medium text-slate-800">{guideline.label ?? field}</span>
+                                  <span className="text-sm font-medium text-foreground">{guideline.label ?? field}</span>
                                   <Input
                                     id={policyInputId}
                                     name={field}
@@ -4103,7 +4140,7 @@ export const App = () => {
                                       }))
                                     }
                                   />
-                                  <span className="text-xs text-slate-500">
+                                  <span className="text-xs text-muted-foreground">
                                     {policyDescription(field, guideline)}
                                     {guideline.min !== undefined || guideline.max !== undefined
                                       ? ` Range: ${formatGuidelineRange(field, guideline.min)} to ${formatGuidelineRange(field, guideline.max)}.`
@@ -4118,7 +4155,7 @@ export const App = () => {
                     </div>
 
                     <label className="block space-y-1">
-                      <span className="text-sm font-medium text-slate-800">Screener Type</span>
+                      <span className="text-sm font-medium text-foreground">Screener Type</span>
                       <Select
                         name="policy_ibkr_scan_code"
                         items={SCREENER_MODE_OPTIONS}
@@ -4145,13 +4182,13 @@ export const App = () => {
                           ))}
                         </SelectPopup>
                       </Select>
-                      <span className="text-xs text-slate-500">
+                      <span className="text-xs text-muted-foreground">
                         Applies a provider-specific screener mode mapping (IBKR + external providers like Alpaca).
                       </span>
                     </label>
 
                     <label className="block space-y-1">
-                      <span className="text-sm font-medium text-slate-800">Analysis Data Provider</span>
+                      <span className="text-sm font-medium text-foreground">Analysis Data Provider</span>
                       <Select
                         name="policy_analysis_data_provider"
                         items={ANALYSIS_PROVIDER_OPTIONS}
@@ -4178,13 +4215,13 @@ export const App = () => {
                           ))}
                         </SelectPopup>
                       </Select>
-                      <span className="text-xs text-slate-500">
+                      <span className="text-xs text-muted-foreground">
                         Controls quote/history/options analysis source. Alpaca mode bypasses IBKR analysis requests.
                       </span>
                     </label>
 
                     <label className="block space-y-1">
-                      <span className="text-sm font-medium text-slate-800">Universe Symbols (comma-separated)</span>
+                      <span className="text-sm font-medium text-foreground">Universe Symbols (comma-separated)</span>
                       <Input
                         id="policy-universe-symbols"
                         name="universe_symbols"
@@ -4192,7 +4229,7 @@ export const App = () => {
                         onChange={(event) => setUniverseInput(event.target.value)}
                         placeholder="SPY, QQQ, IWM, AAPL, MSFT"
                       />
-                      <span className="text-xs text-slate-500">
+                      <span className="text-xs text-muted-foreground">
                         These symbols feed the scanner and recommendation engine.
                       </span>
                     </label>
@@ -4218,7 +4255,7 @@ export const App = () => {
 
                   <TabsContent value="environment" className="mt-4 space-y-4">
                     {envConfigQuery.isLoading && (
-                      <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white/70 p-3 text-sm text-slate-700">
+                      <div className="flex items-center gap-2 rounded-xl border border-border bg-card/70 p-3 text-sm text-foreground">
                         <Spinner className="h-4 w-4" />
                         Loading environment settings...
                       </div>
@@ -4232,13 +4269,13 @@ export const App = () => {
 
                     {!envConfigQuery.isLoading && !envConfigQuery.isError && (
                       <>
-                        <div className="rounded-xl border border-slate-200 bg-white/70 p-3 text-xs text-slate-600">
+                        <div className="rounded-xl border border-border bg-card/70 p-3 text-xs text-muted-foreground">
                           Edit `.env` values directly from the UI. Save applies live where supported, and marks keys that still require restart.
                         </div>
 
                         {Object.entries(envFieldsByCategory).map(([category, fields]) => (
-                          <div key={category} className="rounded-xl border border-slate-200 p-3">
-                            <h3 className="mb-3 font-semibold text-slate-900">{category}</h3>
+                          <div key={category} className="rounded-xl border border-border p-3">
+                            <h3 className="mb-3 font-semibold text-foreground">{category}</h3>
                             <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
                               {fields.map((field) => {
                                 const envInputId = toDomId("env", field.key);
@@ -4256,7 +4293,7 @@ export const App = () => {
                                 return (
                                   <label key={field.key} htmlFor={envInputId} className="block space-y-1">
                                     <div className="flex flex-wrap items-center gap-2">
-                                      <span className="text-sm font-medium text-slate-800">{field.label}</span>
+                                      <span className="text-sm font-medium text-foreground">{field.label}</span>
                                       <Badge variant={field.liveApply ? "success" : "warning"}>
                                         {field.liveApply ? "Live apply" : "Restart required"}
                                       </Badge>
@@ -4279,8 +4316,8 @@ export const App = () => {
                                       }}
                                       placeholder={field.placeholder ?? ""}
                                     />
-                                    <span className="text-xs text-slate-500">{field.description}</span>
-                                    <span className="font-mono text-[11px] text-slate-400">{field.key}</span>
+                                    <span className="text-xs text-muted-foreground">{field.description}</span>
+                                    <span className="font-mono text-[11px] text-muted-foreground/80">{field.key}</span>
                                   </label>
                                 );
                               })}
@@ -4314,7 +4351,7 @@ export const App = () => {
                           </Button>
                         </div>
 
-                        <p className="text-xs text-slate-500">
+                        <p className="text-xs text-muted-foreground">
                           Env file: {envConfigQuery.data?.envPath ?? "-"} | Changed keys:{" "}
                           {envChangedKeys.join(", ") || "none"}
                         </p>

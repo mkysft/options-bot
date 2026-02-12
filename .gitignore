@@ -13,6 +13,9 @@ web/node_modules/
 dist/
 web/dist/
 src/ui-dist/
+electron-dist/
+release/
+out/
 
 # Test/coverage outputs
 coverage/

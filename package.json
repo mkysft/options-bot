@@ -1,6 +1,7 @@
 {
   "name": "options-bot",
   "version": "0.1.0",
+  "main": "electron/main.cjs",
   "private": true,
   "type": "module",
   "description": "IBKR paper-first AI options decision engine (TypeScript + Bun)",
@@ -10,6 +11,9 @@
     "start": "bun run ui:build && bun src/server.ts",
     "ui:dev": "vite --config web/vite.config.js",
     "ui:build": "vite build --config web/vite.config.js",
+    "electron:dev": "ELECTRON_DEV=1 electron ./electron/main.cjs",
+    "electron:dev:attach": "ELECTRON_DEV=1 ELECTRON_MANAGED_BACKEND=0 electron ./electron/main.cjs",
+    "electron:start": "electron ./electron/main.cjs",
     "test": "bun test",
     "typecheck": "bunx tsc --noEmit"
   },
@@ -33,6 +37,7 @@
     "@types/node": "^22.13.5",
     "@vitejs/plugin-react": "^5.1.3",
     "bun-types": "^1.3.9",
+    "electron": "^40.4.0",
     "tailwindcss": "^4.1.18",
     "typescript": "^5.7.3",
     "vite": "^7.3.1"

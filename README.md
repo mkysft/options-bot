@@ -52,6 +52,28 @@ bun run ui:dev
 - In dev, Vite proxies API requests to backend, so UI edits hot-reload without restarting.
 - `bun run start` serves the built UI from `src/ui-dist` and does not use Vite.
 
+## Desktop (Electron)
+
+```bash
+# Desktop dev mode (starts backend + Vite + Electron window)
+bun run electron:dev
+
+# Attach Electron to an already-running backend/UI
+bun run electron:dev:attach
+
+# Desktop app mode (starts built server UI via /ui)
+bun run electron:start
+```
+
+- `electron:dev` runs managed backend startup using `bun run dev`.
+- `electron:start` runs managed backend startup using `bun run start`.
+- Optional env overrides:
+  - `ELECTRON_MANAGED_BACKEND=0`
+  - `ELECTRON_UI_URL_DEV`
+  - `ELECTRON_UI_URL_APP`
+  - `ELECTRON_HEALTH_URL`
+  - `ELECTRON_STARTUP_TIMEOUT_MS`
+
 ## Testing
 
 ```bash
